@@ -28,35 +28,71 @@ class TestWordsFrom(unittest.TestCase):
         self.assertEqual(['abc', 'def'], words_from('abc def'))
 
 
-def blankify(text):
-    return ["_" * len(word) for word in words_from(text)]
+def blank(words):
+    return ["_" * len(word) for word in words]
+
+def blanks_for(text):
+    return blank(words_from(text))
 
 
-class TestBlankify(unittest.TestCase):
+class TestBlanksFor(unittest.TestCase):
     def test_replace_a_letter_with_a_blank(self):
-        self.assertEqual(["_"], blankify("a"))
+        self.assertEqual(["_"], blanks_for("a"))
         
     def test_do_not_replace_punctuation(self):
-        self.assertEqual([], blankify(","))
+        self.assertEqual([], blanks_for(","))
         
     def test_replace_two_letters_with_blanks(self):
-        self.assertEqual(["__"], blankify("ab"))
+        self.assertEqual(["__"], blanks_for("ab"))
         
     def test_do_not_replace_whitespace(self):
-        self.assertEqual(["_", "_"], blankify("a b"))
+        self.assertEqual(["_", "_"], blanks_for("a b"))
         
     def test_replace_digits(self):
-        self.assertEqual(["__"], blankify("12"))
+        self.assertEqual(["__"], blanks_for("12"))
         
     def test_replace_characters_in_simple_sentence(self):
-        self.assertEqual(["____", "__", "_______"], blankify("Call me Ishmael."))
+        self.assertEqual(["____", "__", "_______"], blanks_for("Call me Ishmael."))
         
     def test_do_not_replace_common_puncutation_marks(self):
-        self.assertEqual(["__"], blankify("Hi,"), 'comma failed')
-        self.assertEqual(["___"], blankify("man;"), 'semicolon failed')
-        self.assertEqual(["__"], blankify("Eh?"), 'question mark failed')
-        self.assertEqual(["__"], blankify("No!"), 'exclamation mark failed')
-        self.assertEqual(["_"], blankify("I."), 'period failed')
+        self.assertEqual(["__"], blanks_for("Hi,"), 'comma failed')
+        self.assertEqual(["___"], blanks_for("man;"), 'semicolon failed')
+        self.assertEqual(["__"], blanks_for("Eh?"), 'question mark failed')
+        self.assertEqual(["__"], blanks_for("No!"), 'exclamation mark failed')
+        self.assertEqual(["_"], blanks_for("I."), 'period failed')
+        
+
+def blankify(words_to_blank, text):
+    words = words_to_blank
+    blanks = blank(words)
+    word = words[0]
+    blanked_text = ""
+    end = 0
+    for i, word in enumerate(words):
+        start = text.find(word)
+        blanked_text += text[end:start]
+        blanked_text += blanks[i]
+        end = start + len(word)
+    blanked_text += text[end:]
+    return blanked_text
+     
+
+def blank_all_words_in(text):
+    return blankify(words_from(text), text)
+
+
+class TestHideWordsIn(unittest.TestCase):
+    def test_blankify_one_word_sentence(self):
+        self.assertEqual("__!", blank_all_words_in("No!"))
+    
+    def test_hide_words_in_simple_sentence(self):
+        self.assertEqual("____ __ _______.", blank_all_words_in("Call me Ishmael."))
+        
+    def test_do_not_blank_first_word_in_simple_sentence(self):
+        self.assertEqual("Call __ _______.", blankify(["me", "Ishmael"], "Call me Ishmael."))
+        
+    def test_blank_only_last_word_in_simple_sentence(self):
+        self.assertEqual("Call me _______.", blankify(["Ishmael"], "Call me Ishmael."))
         
 
 def map_character_to_word(word):
@@ -101,14 +137,22 @@ class TestReveal(unittest.TestCase):
         
 
 def game(text):
-    blanked_text = blankify(text)
+    blanks = blanks_for(text)
     words = words_from(text)
-    print(blanked_text)
-    print(words)
-    guess = input('>>>')
-    print(guess)
-    reveal = reveal_if_correct_guess("_________", words[0], guess)
-    print(reveal)
+    while blanks:
+        displayed_text = blankify(words, text)
+        print(displayed_text)
+        word = words.pop(0)
+        blank = blanks.pop(0)
+        guess = input('>>>')
+        reveal = reveal_if_correct_guess(blank, word, guess)
+        if reveal == word:
+            if words:
+                blankify(words, text)
+        else:
+            words.insert(0, word)
+            blanks.insert(0, blank)
+    print(text)
     
 game("Fourscore and seven years ago")
 
