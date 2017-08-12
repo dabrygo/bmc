@@ -15,7 +15,7 @@ def blankify(text):
             blanked += character
     return blanked
 
-   
+
 class TestBlankify(unittest.TestCase):
     def test_replace_a_letter_with_a_blank(self):
         self.assertEqual("_", blankify("a"))
@@ -41,6 +41,27 @@ class TestBlankify(unittest.TestCase):
         self.assertEqual("__?", blankify("Eh?"), 'question mark failed')
         self.assertEqual("__!", blankify("No!"), 'exclamation mark failed')
         self.assertEqual("_.", blankify("I."), 'period failed')
+        
+
+def map_character_to_word(word):
+    return word[0].lower()
+
+def map_characters_to_words(words):
+    return [map_character_to_word(word) for word in words]
+
+
+class TestMapCharacterToWord(unittest.TestCase):
+    def test_character_of_single_letter_word_is_that_letter(self):
+        self.assertEqual('a', map_character_to_word('a'))
+        
+    def test_case_does_not_matter(self):
+        self.assertEqual('a', map_character_to_word('A'))
+        
+    def test_character_of_multiletter_word_is_first_letter(self):
+        self.assertEqual('a', map_character_to_word('ab'))
+        
+    def test_first_letters_of_multiple_words(self):
+        self.assertEqual(['i', 'a', 'g'], map_characters_to_words(['I', 'am', 'Groot']))
         
         
 if __name__ == '__main__':
