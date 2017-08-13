@@ -134,7 +134,16 @@ class TestReveal(unittest.TestCase):
     @unittest.expectedFailure
     def test_do_not_guess_more_than_one_letter(self):
         reveal_if_correct_guess('__', 'hi', 'hi')
-        
+ 
+
+def get_character_from_stdin():
+    import msvcrt # FIXME: Only works with Windows
+    while msvcrt.kbhit():
+        msvcrt.getch()
+    guess_byte = msvcrt.getch()
+    guess = guess_byte.decode('utf-8')
+    return guess.lower()       
+
 
 def game(text):
     blanks = blanks_for(text)
@@ -144,7 +153,10 @@ def game(text):
         print(displayed_text)
         word = words.pop(0)
         blank = blanks.pop(0)
-        guess = input('>>>')
+        guess = get_character_from_stdin()
+        print(guess)
+        if guess == 0:
+            break
         reveal = reveal_if_correct_guess(blank, word, guess)
         if reveal == word:
             if words:
@@ -155,6 +167,7 @@ def game(text):
     print(text)
     
 game("Fourscore and seven years ago")
-
+    
+    
 if __name__ == '__main__':
     unittest.main()
