@@ -3,96 +3,103 @@ Created on Aug 12, 2017
 
 @author: dabrygo
 '''
-
 import unittest
 
-def words_from(text):
-    words = []
-    word = ""
-    for character in text:
-        if character.isalnum():
-            word += character
-        elif word:
+class Blanker:
+    def __init__(self, text):
+        self.text = text
+        self.words = Blanker.words_from(text)
+        
+    @staticmethod
+    def words_from(text):
+        words = []
+        word = ""
+        for character in text:
+            if character.isalnum():
+                word += character
+            elif word:
+                words.append(word)
+                word = ""
+        if word:
             words.append(word)
-            word = ""
-    if word:
-        words.append(word)
-    return words
+        return words
+    
+    # FIXME injects word list, which may not be original
+    def blank(self, words):
+        return ["_" * len(word) for word in words]
+
+    def blanks_for(self, text):
+        return self.blank(self.words_from(text))
+    
+    def blankify(self, words_to_blank):
+        blanks = self.blank(words_to_blank)
+        word = words_to_blank[0]
+        blanked_text = ""
+        end = 0
+        for i, word in enumerate(words_to_blank):
+            start = self.text.find(word)
+            blanked_text += self.text[end:start]
+            blanked_text += blanks[i]
+            end = start + len(word)
+        blanked_text += self.text[end:]
+        return blanked_text
 
 
-class TestWordsFrom(unittest.TestCase):
+class TestBlanker(unittest.TestCase):
+    def setUp(self):
+        self.blanker = Blanker('abc')
+    
     def test_words_from_single_word(self):
-        self.assertEqual(['abc'], words_from('abc'))
+        self.assertEqual(['abc'], Blanker('abc').words)
         
     def test_words_from_multiple_singly_spaced_words(self):
-        self.assertEqual(['abc', 'def'], words_from('abc def'))
+        self.assertEqual(['abc', 'def'], Blanker('abc def').words)
 
-
-def blank(words):
-    return ["_" * len(word) for word in words]
-
-def blanks_for(text):
-    return blank(words_from(text))
-
-
-class TestBlanksFor(unittest.TestCase):
+    @staticmethod
+    def blanks_for(text):
+        blanker = Blanker(text)
+        return blanker.blank(blanker.words)
+    
     def test_replace_a_letter_with_a_blank(self):
-        self.assertEqual(["_"], blanks_for("a"))
+        self.assertEqual(["_"], TestBlanker.blanks_for("a"))
         
     def test_do_not_replace_punctuation(self):
-        self.assertEqual([], blanks_for(","))
+        self.assertEqual([], TestBlanker.blanks_for(","))
         
     def test_replace_two_letters_with_blanks(self):
-        self.assertEqual(["__"], blanks_for("ab"))
+        self.assertEqual(["__"], TestBlanker.blanks_for("ab"))
         
     def test_do_not_replace_whitespace(self):
-        self.assertEqual(["_", "_"], blanks_for("a b"))
+        self.assertEqual(["_", "_"], TestBlanker.blanks_for("a b"))
         
     def test_replace_digits(self):
-        self.assertEqual(["__"], blanks_for("12"))
+        self.assertEqual(["__"], TestBlanker.blanks_for("12"))
         
     def test_replace_characters_in_simple_sentence(self):
-        self.assertEqual(["____", "__", "_______"], blanks_for("Call me Ishmael."))
+        self.assertEqual(["____", "__", "_______"], TestBlanker.blanks_for("Call me Ishmael."))
         
     def test_do_not_replace_common_puncutation_marks(self):
-        self.assertEqual(["__"], blanks_for("Hi,"), 'comma failed')
-        self.assertEqual(["___"], blanks_for("man;"), 'semicolon failed')
-        self.assertEqual(["__"], blanks_for("Eh?"), 'question mark failed')
-        self.assertEqual(["__"], blanks_for("No!"), 'exclamation mark failed')
-        self.assertEqual(["_"], blanks_for("I."), 'period failed')
-        
+        self.assertEqual(["__"], TestBlanker.blanks_for("Hi,"), 'comma failed')
+        self.assertEqual(["___"], TestBlanker.blanks_for("man;"), 'semicolon failed')
+        self.assertEqual(["__"], TestBlanker.blanks_for("Eh?"), 'question mark failed')
+        self.assertEqual(["__"], TestBlanker.blanks_for("No!"), 'exclamation mark failed')
+        self.assertEqual(["_"], TestBlanker.blanks_for("I."), 'period failed')
 
-def blankify(words_to_blank, text):
-    words = words_to_blank
-    blanks = blank(words)
-    word = words[0]
-    blanked_text = ""
-    end = 0
-    for i, word in enumerate(words):
-        start = text.find(word)
-        blanked_text += text[end:start]
-        blanked_text += blanks[i]
-        end = start + len(word)
-    blanked_text += text[end:]
-    return blanked_text
-     
-
-def blank_all_words_in(text):
-    return blankify(words_from(text), text)
-
-
-class TestHideWordsIn(unittest.TestCase):
+    @staticmethod
+    def blank_all_words_in(text):
+        return Blanker(text).blankify(Blanker.words_from(text))
+    
     def test_blankify_one_word_sentence(self):
-        self.assertEqual("__!", blank_all_words_in("No!"))
+        self.assertEqual("__!", TestBlanker.blank_all_words_in("No!"))
     
     def test_hide_words_in_simple_sentence(self):
-        self.assertEqual("____ __ _______.", blank_all_words_in("Call me Ishmael."))
+        self.assertEqual("____ __ _______.", TestBlanker.blank_all_words_in("Call me Ishmael."))
         
     def test_do_not_blank_first_word_in_simple_sentence(self):
-        self.assertEqual("Call __ _______.", blankify(["me", "Ishmael"], "Call me Ishmael."))
+        self.assertEqual("Call __ _______.", Blanker("Call me Ishmael.").blankify(["me", "Ishmael"]))
         
     def test_blank_only_last_word_in_simple_sentence(self):
-        self.assertEqual("Call me _______.", blankify(["Ishmael"], "Call me Ishmael."))
+        self.assertEqual("Call me _______.", Blanker("Call me Ishmael.").blankify(["Ishmael"]))
         
 
 def map_character_to_word(word):
@@ -146,28 +153,25 @@ def get_character_from_stdin():
 
 
 def game(text):
-    blanks = blanks_for(text)
-    words = words_from(text)
+    blanker = Blanker(text)
+    blanks = blanker.blanks_for(text)
+    words = blanker.words
     while blanks:
-        displayed_text = blankify(words, text)
+        displayed_text = blanker.blankify(words)
         print(displayed_text)
         word = words.pop(0)
         blank = blanks.pop(0)
         guess = get_character_from_stdin()
-        print(guess)
-        if guess == 0:
-            break
         reveal = reveal_if_correct_guess(blank, word, guess)
         if reveal == word:
             if words:
-                blankify(words, text)
+                blanker.blankify(words)
         else:
             words.insert(0, word)
             blanks.insert(0, blank)
     print(text)
     
-game("Fourscore and seven years ago")
-    
-    
+
 if __name__ == '__main__':
+#     game("Fourscore and seven years ago") 
     unittest.main()
