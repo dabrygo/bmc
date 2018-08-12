@@ -1,3 +1,4 @@
+'''Palette of hues'''
 import abc
 
 
