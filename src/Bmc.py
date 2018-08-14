@@ -5,6 +5,7 @@ import time
 
 import Color
 import Display
+import Decoding
 import Encoding
 
 # Changeable Properties
@@ -26,6 +27,7 @@ verse = 'Paul, a prisoner of Christ Jesus, and Timothy, our brother, To Philemon
 
 encoding = Encoding.Blank.hangman(verse)
 encoded = encoding.encoded()
+starts = encoding.starts()
 lines = wrapper.wrap(encoded)
 for i, line in enumerate(lines):
   x = 0
@@ -66,8 +68,10 @@ keys = {
 
 tokens = encoding.tokens()
 token = tokens.pop(0)
+start = starts.pop(0)
 letter = token[0].lower()
 expected_key = keys[letter]
+decoding = Decoding.Decoding(verse, encoding)
 print(token, letter, expected_key)
 while True:
   for event in pygame.event.get():
@@ -79,8 +83,17 @@ while True:
       if pressed[expected_key]:
         token = tokens.pop(0)
         letter = token[0].lower()
+        start = starts.pop(0)
         expected_key = keys[letter]
-        print(token, letter, expected_key)
+        print(token, start, letter, expected_key)
+        revealed = decoding.reveal()
+        lines = wrapper.wrap(revealed)
+        print(lines)
+        for i, line in enumerate(lines):
+          x = 0
+          y = i * font_size
+          textbox = Display.TextBox.default(line, text_color, x, y)
+          screen.add(textbox)
 
     screen.refresh()
 

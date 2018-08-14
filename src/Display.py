@@ -31,7 +31,7 @@ class Box:
 
 
 # TODO Use ABC on Blittable and make TextBox a subclass
-class Blittable(abc.ABC):
+class BlittableText(abc.ABC):
   @abc.abstractmethod
   def surface(self):
     pass
@@ -41,7 +41,7 @@ class Blittable(abc.ABC):
     pass
 
 
-class TextBox(Blittable):
+class TextBox(BlittableText):
   def __init__(self, surface, rectangle):
     self._surface = surface
     self._rectangle = rectangle

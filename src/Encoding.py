@@ -3,17 +3,33 @@ import abc
 import re
 
 class Encoding(abc.ABC):
-  def __init__(self, text):
-    self.text = text
-
   @abc.abstractmethod
   def tokens(self):
     pass 
 
   @abc.abstractmethod
+  def starts(self):
+    pass
+
+  @abc.abstractmethod
   def encoded(self):
     pass
-    
+
+
+class Fake(Encoding):
+  def __init__(self, text, character="*"):
+    self._text = text
+    self._character = character
+
+  def tokens(self):
+    pass 
+
+  def starts(self):
+    pass
+
+  def encoded(self):
+    return self._character * len(self._text)
+   
 
 class Blank(Encoding):
   def __init__(self, text, character):
@@ -33,6 +49,11 @@ class Blank(Encoding):
     regex = r'\w+'
     return re.finditer(regex, self._text) 
 
+  def starts(self):
+    matches = self._matches()
+    starts = [match.start() for match in matches]
+    return starts 
+
   def encoded(self):
     start = 0
     obscured = ""
@@ -43,3 +64,4 @@ class Blank(Encoding):
       hideable = self._character * (start - end)
       obscured = obscured + unhideable + hideable
     return obscured
+   
