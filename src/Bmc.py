@@ -13,6 +13,7 @@ background = Color.Black()
 text_color = Color.White()
 font_size = 32
 font = pygame.font.SysFont('courier', font_size, bold=True)
+delay = 0.25  # seconds to wait before changing a screen
 
 # Derived Properties
 width = 1200
@@ -96,7 +97,8 @@ for verse in verses:
           redraw(lines, screen)          
           if not tokens:
             this_verse = False
-	  else:
+            time.sleep(delay)
+          else:
             token = tokens.pop(0)
             letter = token[0].lower()
             start = starts.pop(0)
