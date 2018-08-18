@@ -9,9 +9,9 @@ class TestBlank(unittest.TestCase):
     self.assertEqual(['The', 'rain', 'in', 'Spain'], encoding.tokens())
 
   def test_encoded(self):
-    plaintext = 'Paul, a prisoner of Christ Jesus, and Timothy our brother'
+    plaintext = 'Paul, a prisoner of Christ Jesus, and Timothy our brother,'
     encoding = Encoding.Blank.hangman(plaintext)
-    expected = '____, _ ________ __ ______ _____, ___ _______ ___ _______'
+    expected = '____, _ ________ __ ______ _____, ___ _______ ___ _______,'
     self.assertEqual(expected, encoding.encoded())
 
 

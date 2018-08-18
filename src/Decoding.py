@@ -23,12 +23,12 @@ class Decoding:
 
 class TestDecoding(unittest.TestCase):
   def test(self):
-    text = "Paul, a prisoner"
+    text = "Paul, a prisoner,"
     encoding = Encoding.Blank.hangman(text)
-    self.assertEqual("____, _ ________", encoding.encoded())
+    self.assertEqual("____, _ ________,", encoding.encoded())
     decoding = Decoding(text, encoding)
     revealed = decoding.reveal()
-    self.assertEqual("Paul, _ ________", revealed)
+    self.assertEqual("Paul, _ ________,", revealed)
 
 
 if __name__ == '__main__':

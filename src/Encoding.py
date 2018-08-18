@@ -63,5 +63,5 @@ class Blank(Encoding):
       start = match.end()
       hideable = self._character * (start - end)
       obscured = obscured + unhideable + hideable
-    return obscured
+    return obscured + self._text[-1]
    
