@@ -22,20 +22,14 @@ screen = Display.Screen.size_and_color(width=width, height=height, color=backgro
 max_chars = 60
 wrapper = textwrap.TextWrapper(max_chars)
 
-
-verse = 'Paul, a prisoner of Christ Jesus, and Timothy, our brother, To Philemon our dear friend and fellow worker'
-
-encoding = Encoding.Blank.hangman(verse)
-encoded = encoding.encoded()
-starts = encoding.starts()
-lines = wrapper.wrap(encoded)
-displays = []
-for i, line in enumerate(lines):
-  x = 0
-  y = i * font_size
-  textbox = Display.TextBox.default(line, text_color, x, y)
-  displays.append(textbox)
-screen.blit(displays)
+def redraw(lines, screen):
+  displays = []
+  for i, line in enumerate(lines):
+    x = 0
+    y = i * font_size
+    textbox = Display.TextBox.default(line, text_color, x, y)
+    displays.append(textbox)
+  screen.blit(displays)
 
 
 keys = {
@@ -66,37 +60,45 @@ keys = {
         'y': pygame.K_y, 
         'z': pygame.K_z, 
        }
-        
 
-tokens = encoding.tokens()
-token = tokens.pop(0)
-start = starts.pop(0)
-letter = token[0].lower()
-expected_key = keys[letter]
-decoding = Decoding.Decoding(verse, encoding)
-print(token, letter, expected_key)
-while True:
-  for event in pygame.event.get():
-    if event.type == pygame.QUIT:
-      sys.exit()
+verse_1 = 'Paul, a prisoner of Christ Jesus, and Timothy, our brother, To Philemon our dear friend and fellow worker,'
+verse_2 = 'to Apphia our sister, to Archippus our fellow soldier and to the church that meets in your home:'
+verse_3 = 'Grace to you and peace from God our Father and the Lord Jesus Christ.'
 
-    if event.type == pygame.KEYDOWN:
-      pressed = pygame.key.get_pressed()
-      if pressed[expected_key]:
-        token = tokens.pop(0)
-        letter = token[0].lower()
-        start = starts.pop(0)
-        expected_key = keys[letter]
-        print(token, start, letter, expected_key)
-        revealed = decoding.reveal()
-        lines = wrapper.wrap(revealed)
-        print(lines)
-        displays = []
-        for i, line in enumerate(lines):
-          x = 0
-          y = i * font_size
-          textbox = Display.TextBox.default(line, text_color, x, y)
-          displays.append(textbox)
-        screen.blit(displays)
+verses = [verse_1, verse_2, verse_3]
 
+for verse in verses:
+  encoding = Encoding.Blank.hangman(verse)
+  encoded = encoding.encoded()
+  starts = encoding.starts()
+  lines = wrapper.wrap(encoded)
+  redraw(lines, screen)
+
+  tokens = encoding.tokens()
+  token = tokens.pop(0)
+  start = starts.pop(0)
+  letter = token[0].lower()
+  expected_key = keys[letter]
+  decoding = Decoding.Decoding(verse, encoding)
+
+  this_verse = True
+  while this_verse:
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+        sys.exit()
+
+      if event.type == pygame.KEYDOWN:
+        pressed = pygame.key.get_pressed()
+        if pressed[expected_key]:
+          revealed = decoding.reveal()
+          lines = wrapper.wrap(revealed)
+          print(lines)
+          redraw(lines, screen)          
+          if not tokens:
+            this_verse = False
+	  else:
+            token = tokens.pop(0)
+            letter = token[0].lower()
+            start = starts.pop(0)
+            expected_key = keys[letter]
 
