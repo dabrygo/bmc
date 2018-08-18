@@ -29,11 +29,13 @@ encoding = Encoding.Blank.hangman(verse)
 encoded = encoding.encoded()
 starts = encoding.starts()
 lines = wrapper.wrap(encoded)
+displays = []
 for i, line in enumerate(lines):
   x = 0
   y = i * font_size
   textbox = Display.TextBox.default(line, text_color, x, y)
-  screen.add(textbox)
+  displays.append(textbox)
+screen.blit(displays)
 
 
 keys = {
@@ -89,11 +91,12 @@ while True:
         revealed = decoding.reveal()
         lines = wrapper.wrap(revealed)
         print(lines)
+        displays = []
         for i, line in enumerate(lines):
           x = 0
           y = i * font_size
           textbox = Display.TextBox.default(line, text_color, x, y)
-          screen.add(textbox)
+          displays.append(textbox)
+        screen.blit(displays)
 
-    screen.refresh()
 

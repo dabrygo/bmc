@@ -67,10 +67,9 @@ class TextBox(BlittableText):
 
 
 class Screen:
-  def __init__(self, screen, color, contents=[]):
+  def __init__(self, screen, color):
     self._screen = screen
     self._color = color
-    self._contents = contents
 
   @classmethod
   def size_and_color(cls, width, height, color):
@@ -78,13 +77,10 @@ class Screen:
     screen = pygame.display.set_mode(size)
     return cls(screen, color)
  
-  def add(self, item):
-    self._contents.append(item)
-
-  def refresh(self):
+  def blit(self, items):
     rgb = self._color.rgb()
     self._screen.fill(rgb)
-    for item in self._contents:
+    for item in items:
       surface = item.surface()
       rectangle = item.rectangle()
       self._screen.blit(surface, rectangle)
