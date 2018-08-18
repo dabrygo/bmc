@@ -62,11 +62,8 @@ keys = {
         'z': pygame.K_z, 
        }
 
-verse_1 = 'Paul, a prisoner of Christ Jesus, and Timothy, our brother, To Philemon our dear friend and fellow worker,'
-verse_2 = 'to Apphia our sister, to Archippus our fellow soldier and to the church that meets in your home:'
-verse_3 = 'Grace to you and peace from God our Father and the Lord Jesus Christ.'
-
-verses = [verse_1, verse_2, verse_3]
+with open('Philemon.txt') as f:
+  verses = [line.strip() for line in f.readlines()]
 
 for verse in verses:
   encoding = Encoding.Blank.hangman(verse)
