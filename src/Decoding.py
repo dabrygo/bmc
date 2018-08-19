@@ -1,5 +1,3 @@
-import unittest
-
 import Encoding
 
 class Decoding:
@@ -21,15 +19,4 @@ class Decoding:
     return shown + hidden
 
 
-class TestDecoding(unittest.TestCase):
-  def test(self):
-    text = "Paul, a prisoner,"
-    encoding = Encoding.Blank.hangman(text)
-    self.assertEqual("____, _ ________,", encoding.encoded())
-    decoding = Decoding(text, encoding)
-    revealed = decoding.reveal()
-    self.assertEqual("Paul, _ ________,", revealed)
 
-
-if __name__ == '__main__':
-  unittest.main()
