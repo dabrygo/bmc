@@ -7,6 +7,7 @@ import Color
 import Display
 import Decoding
 import Encoding
+import Reader
 
 # Changeable Properties
 background = Color.Black()
@@ -62,14 +63,20 @@ keys = {
         'z': pygame.K_z, 
        }
 
-with open('Philemon.txt') as f:
-  verses = [line.strip() for line in f.readlines()]
+
+reader = Reader.Reader('Philemon.txt')
+verses = reader.read(max_width=max_chars)
 
 for verse in verses:
-  encoding = Encoding.Blank.hangman(verse)
+  text = verse.text()
+  encoding = Encoding.Blank.hangman(text)
   encoded = encoding.encoded()
   starts = encoding.starts()
   lines = wrapper.wrap(encoded)
+  section = verse.section()
+  lines.insert(0, section)
+  reference = verse.reference()
+  lines.insert(1, reference)
   redraw(lines, screen)
 
   tokens = encoding.tokens()
@@ -77,7 +84,7 @@ for verse in verses:
   start = starts.pop(0)
   letter = token[0].lower()
   expected_key = keys[letter]
-  decoding = Decoding.Decoding(verse, encoding)
+  decoding = Decoding.Decoding(text, encoding)
 
   this_verse = True
   while this_verse:
@@ -90,6 +97,10 @@ for verse in verses:
         if pressed[expected_key]:
           revealed = decoding.reveal()
           lines = wrapper.wrap(revealed)
+          section = verse.section()
+          lines.insert(0, section)
+          reference = verse.reference()
+          lines.insert(1, reference)
           print(lines)
           redraw(lines, screen)          
           if not tokens:
