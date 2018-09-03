@@ -1,28 +1,28 @@
+import abc
+
 import Pattern
 import Verse
 
 class Reader:
+  '''A supplier of lines of text'''
+  @abc.abstractmethod
+  def lines(self):
+    pass
+
+
+def Fake(Reader):
+  def __init__(self, lines):
+    self._lines = lines
+
+  def lines(self):
+    return self._lines
+
+
+def File(Reader):
   def __init__(self, filename):
     self._filename = filename
 
-  def read(self, max_width):
-    verses = []
-    section = ""
+  def lines(self, max_width):
     with open(self._filename) as f:
-      for line in f:
-        pattern = Pattern.Verse(line)
-        if not pattern.matches():
-          section = line
-        else:
-          verse = Verse.Default(section, line, max_width) 
-          verses.append(verse)
-    return verses
-
-
-if __name__ == '__main__':
-  reader = Reader('Philemon.txt')
-  verses = reader.read(max_width=60)
-  for verse in verses:
-    print(f'{verse.section()} ({verse.reference()}) "{verse.text()}"')
-
+      return f.readlines()
 

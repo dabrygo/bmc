@@ -6,6 +6,11 @@ import Pattern
 
 
 class Verse:
+  def __eq__(self, other):
+    return self.reference() == other.reference() \
+      and self.section()==other.section() \
+      and self.text()==other.text()
+
   @abc.abstractmethod
   def reference(self):
     pass
@@ -23,8 +28,27 @@ class Verse:
     pass
 
 
+class Fake(Verse):
+  def __init__(self, section, reference, text):
+    self._reference = reference
+    self._section = section
+    self._text = text
+
+  def reference(self):
+    return self._reference
+
+  def section(self):
+    return self._section
+
+  def text(self):
+    return self._text
+
+  def lines(self):
+    raise Exception("Not yet implemented")
+
+
 class Default(Verse):
-  def __init__(self, section, text, max_width):
+  def __init__(self, section, text, max_width=None):
     self._section = section
     self._text = text
     self._max_width = max_width
@@ -45,6 +69,8 @@ class Default(Verse):
 
   def lines(self):
     text = self.text()
+    if not self._max_width:
+      return text
     wrapper = textwrap.TextWrapper(self._max_width)
     return wrapper.wrap(text)
 
