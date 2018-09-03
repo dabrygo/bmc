@@ -10,7 +10,7 @@ class Reader:
     pass
 
 
-def Fake(Reader):
+class Fake(Reader):
   def __init__(self, lines):
     self._lines = lines
 
@@ -18,11 +18,11 @@ def Fake(Reader):
     return self._lines
 
 
-def File(Reader):
+class File(Reader):
   def __init__(self, filename):
     self._filename = filename
 
-  def lines(self, max_width):
+  def lines(self):
     with open(self._filename) as f:
       return f.readlines()
 

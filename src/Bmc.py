@@ -7,6 +7,7 @@ import Color
 import Display
 import Decoding
 import Encoding
+import Parser
 import Reader
 
 # Changeable Properties
@@ -64,8 +65,10 @@ keys = {
        }
 
 
-reader = Reader.Reader('Philemon.txt')
-verses = reader.read(max_width=max_chars)
+reader = Reader.File('Philemon.txt')
+lines = reader.lines()
+parser = Parser.Simple(lines)
+verses = parser.parse(max_width=max_chars)
 
 for verse in verses:
   text = verse.text()
