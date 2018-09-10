@@ -9,6 +9,9 @@ import Decoding
 import Encoding
 import Parser
 import Reader
+import Sample
+import Tokens
+import Word
 
 # Changeable Properties
 background = Color.Black()
@@ -34,36 +37,36 @@ def redraw(lines, screen):
     displays.append(textbox)
   screen.blit(displays)
 
-
-keys = {
-        'a': pygame.K_a,
-        'b': pygame.K_b,
-        'c': pygame.K_c,
-        'd': pygame.K_d,
-        'e': pygame.K_e,
-        'f': pygame.K_f, 
-        'g': pygame.K_g, 
-        'h': pygame.K_h, 
-        'i': pygame.K_i, 
-        'j': pygame.K_j, 
-        'k': pygame.K_k, 
-        'l': pygame.K_l, 
-        'm': pygame.K_m, 
-        'n': pygame.K_n, 
-        'o': pygame.K_o, 
-        'p': pygame.K_p, 
-        'q': pygame.K_q, 
-        'r': pygame.K_r, 
-        's': pygame.K_s, 
-        't': pygame.K_t, 
-        'u': pygame.K_u, 
-        'v': pygame.K_v, 
-        'w': pygame.K_w, 
-        'x': pygame.K_x, 
-        'y': pygame.K_y, 
-        'z': pygame.K_z, 
+letters = {
+         pygame.K_a: 'a',
+         pygame.K_b: 'b',
+         pygame.K_c: 'c',
+         pygame.K_d: 'd',
+         pygame.K_e: 'e',
+         pygame.K_f: 'f',
+         pygame.K_g: 'g',
+         pygame.K_h: 'h',
+         pygame.K_i: 'i',
+         pygame.K_j: 'j',
+         pygame.K_k: 'k',
+         pygame.K_l: 'l',
+         pygame.K_m: 'm',
+         pygame.K_n: 'n',
+         pygame.K_o: 'o',
+         pygame.K_p: 'p',
+         pygame.K_q: 'q',
+         pygame.K_r: 'r',
+         pygame.K_s: 's',
+         pygame.K_t: 't',
+         pygame.K_u: 'u',
+         pygame.K_v: 'v',
+         pygame.K_w: 'w',
+         pygame.K_x: 'x',
+         pygame.K_y: 'y',
+         pygame.K_z: 'z',
        }
 
+HINT_KEY = pygame.K_SLASH
 
 reader = Reader.File('Philemon.txt')
 lines = reader.lines()
@@ -72,46 +75,40 @@ verses = parser.parse(max_width=max_chars)
 
 for verse in verses:
   text = verse.text()
-  encoding = Encoding.Blank.hangman(text)
-  encoded = encoding.encoded()
-  starts = encoding.starts()
-  lines = wrapper.wrap(encoded)
+  tokens = Tokens.Classic(text)
+  tokenized = tokens.tokenize()
+  sample = Sample.Classic(tokenized)
+  lines = wrapper.wrap(sample.text())
   section = verse.section()
   lines.insert(0, section)
   reference = verse.reference()
   lines.insert(1, reference)
   redraw(lines, screen)
 
-  tokens = encoding.tokens()
-  token = tokens.pop(0)
-  start = starts.pop(0)
-  letter = token[0].lower()
-  expected_key = keys[letter]
-  decoding = Decoding.Decoding(text, encoding)
-
-  this_verse = True
-  while this_verse:
+  while sample.guessable():
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
         sys.exit()
 
       if event.type == pygame.KEYDOWN:
-        pressed = pygame.key.get_pressed()
-        if pressed[expected_key]:
-          revealed = decoding.reveal()
+        pressed_keys = pygame.key.get_pressed()
+        if pressed_keys[sample.key()]:
+          sample.guess(letters[sample.key()])
+          revealed = sample.text()
           lines = wrapper.wrap(revealed)
           section = verse.section()
           lines.insert(0, section)
           reference = verse.reference()
           lines.insert(1, reference)
-          print(lines)
           redraw(lines, screen)          
-          if not tokens:
-            this_verse = False
-            time.sleep(delay)
-          else:
-            token = tokens.pop(0)
-            letter = token[0].lower()
-            start = starts.pop(0)
-            expected_key = keys[letter]
-
+        if pressed_keys[HINT_KEY]:
+          sample.hint()
+          revealed = sample.text()
+          lines = wrapper.wrap(revealed)
+          section = verse.section()
+          lines.insert(0, section)
+          reference = verse.reference()
+          lines.insert(1, reference)
+          redraw(lines, screen)          
+  time.sleep(delay)
+ 
