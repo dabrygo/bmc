@@ -5,7 +5,7 @@ import Word
 class TestClassic(unittest.TestCase):
   def test_status(self):
     word = Word.Classic('bird', '*')
-    self.assertEqual('****', word.status())
+    self.assertEqual('****', word.hide())
 
   def test_hint(self):
     word = Word.Classic('at', '*')
