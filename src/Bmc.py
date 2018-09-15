@@ -5,8 +5,6 @@ import time
 
 import Color
 import Display
-import Decoding
-import Encoding
 import Parser
 import Reader
 import Sample
