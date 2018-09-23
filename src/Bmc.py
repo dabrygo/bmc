@@ -1,4 +1,5 @@
 import pygame
+import os.path
 import sys
 import textwrap
 import time
@@ -66,7 +67,15 @@ letters = {
 
 HINT_KEY = pygame.K_SLASH
 
-reader = Reader.File('Philemon.txt')
+args = sys.argv
+if len(args) > 1:
+  book = sys.argv[1]
+else:
+  book = 'John'
+
+filename = book + '.txt'
+path = os.path.join('books', filename)
+reader = Reader.File(path)
 lines = reader.lines()
 parser = Parser.Simple(lines)
 verses = parser.parse(max_width=max_chars)
