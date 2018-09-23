@@ -1,3 +1,4 @@
+import os.path
 import pygame
 import sys
 import textwrap
@@ -68,7 +69,13 @@ letters = {
 
 HINT_KEY = pygame.K_SLASH
 
-reader = Reader.File('Philemon.txt')
+directory = 'books'
+book = 'John'
+#book = '3_John'
+#book = 'Philemon' 
+filename = book + '.txt'
+path = os.path.join(directory, filename)
+reader = Reader.File(path)
 lines = reader.lines()
 parser = Parser.Simple(lines)
 verses = parser.parse(max_width=max_chars)
