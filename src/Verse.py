@@ -3,6 +3,7 @@ import re
 import textwrap
 
 import Pattern
+import Reference
 
 
 class Verse:
@@ -10,6 +11,9 @@ class Verse:
     return self.reference() == other.reference() \
       and self.section()==other.section() \
       and self.text()==other.text()
+
+  def __str__(self):
+    return f'({self.reference()} {self.text()}'
 
   @abc.abstractmethod
   def reference(self):
@@ -58,7 +62,8 @@ class Default(Verse):
  
   def reference(self):
      pattern = self._pattern()
-     return pattern.group(1)
+     group = pattern.group(1)
+     return Reference.Standard(group)
 
   def section(self):
     return self._section

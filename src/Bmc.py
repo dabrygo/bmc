@@ -8,6 +8,7 @@ import Color
 import Display
 import Parser
 import Reader
+import Reference
 import Sample
 import Tokens
 import Word
@@ -73,6 +74,16 @@ if len(args) > 1:
 else:
   book = 'John'
 
+if len(args) > 2:
+  start = sys.argv[2]
+else:
+  start = '1:1'
+
+if len(args) > 3:
+  end = sys.argv[3]
+else:
+  end = None
+
 filename = book + '.txt'
 path = os.path.join('books', filename)
 reader = Reader.File(path)
@@ -80,7 +91,36 @@ lines = reader.lines()
 parser = Parser.Simple(lines)
 verses = parser.parse(max_width=max_chars)
 
+parts = start.split(':')
+start_chapter = int(parts[0])
+start_verse = int(parts[1])
+#start_reference = Reference.Fields(book, start_chapter, start_verse)
+
+after_start = []
 for verse in verses:
+  reference = verse.reference()
+  if reference.chapter() < start_chapter:
+    continue
+  if reference.verse() < start_verse:
+    continue
+  after_start.append(verse)
+to_use = after_start
+
+if end:
+  parts = end.split(':')
+  end_chapter = int(parts[0])
+  end_verse = int(parts[1])
+
+  before_end = []
+  for verse in after_start:
+    reference = verse.reference()
+    if reference.chapter() == start_chapter and reference.verse() == end_verse:
+      break
+    before_end.append(verse)
+  before_end.append(verse)
+  to_use = before_end
+
+for verse in to_use:
   text = verse.text()
   tokens = Tokens.Classic(text)
   tokenized = tokens.tokenize()
@@ -88,7 +128,7 @@ for verse in verses:
   lines = wrapper.wrap(sample.text())
   section = verse.section()
   lines.insert(0, section)
-  reference = verse.reference()
+  reference = str(verse.reference())
   lines.insert(1, reference)
   redraw(lines, screen)
 
@@ -105,7 +145,7 @@ for verse in verses:
           lines = wrapper.wrap(revealed)
           section = verse.section()
           lines.insert(0, section)
-          reference = verse.reference()
+          reference = str(verse.reference())
           lines.insert(1, reference)
           redraw(lines, screen)          
         if pressed_keys[HINT_KEY]:
@@ -114,7 +154,7 @@ for verse in verses:
           lines = wrapper.wrap(revealed)
           section = verse.section()
           lines.insert(0, section)
-          reference = verse.reference()
+          reference = str(verse.reference())
           lines.insert(1, reference)
           redraw(lines, screen)          
   time.sleep(delay)
