@@ -14,7 +14,7 @@ class Classic(Tokens):
     self._index = 0
 
   def tokenize(self):
-    words = re.finditer(r'\w+', self._text)
+    words = re.finditer(r"\w+('\w)?", self._text)
     tokens = []
     start = 0
     for match in words:
