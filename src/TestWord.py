@@ -2,6 +2,7 @@ import unittest
 
 import Word
 
+
 class TestClassic(unittest.TestCase):
   def test_status(self):
     word = Word.Classic('bird', '*')
@@ -11,10 +12,10 @@ class TestClassic(unittest.TestCase):
     word = Word.Classic('at', '*')
     self.assertEqual('*t', word.hint())
     self.assertEqual('at', word.hint())
-    try:
+    try: # No more hints to give
       word.hint()
       self.fail()
-    except Exception:
+    except ValueError:
       pass
 
   def test_guess(self):

@@ -1,8 +1,13 @@
+'''
+Entry point file for game.
+'''
+
 import os.path
-import pygame
 import sys
 import textwrap
 import time
+
+import pygame
 
 import Color
 import Display
@@ -10,7 +15,6 @@ import Parser
 import Reader
 import Sample
 import Tokens
-import Word
 
 # Changeable Properties
 background = Color.Black()
@@ -67,9 +71,9 @@ letters = {
 
 HINT_KEY = pygame.K_SLASH
 
-directory = 'books'
-book = 'John'
-#book = '3_John'
+directory = 'rsc/books'
+#book = 'John'
+book = '3_John'
 #book = 'Philemon' 
 filename = book + '.txt'
 path = os.path.join(directory, filename)

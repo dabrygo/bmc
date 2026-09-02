@@ -1,7 +1,10 @@
+'''Extract tokens from a file'''
+
 import abc
 
 import Pattern
 import Verse
+
 
 class Parser:
   @abc.abstractmethod

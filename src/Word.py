@@ -1,6 +1,7 @@
 '''Base unit that user must uncover before continuing'''
 
 import abc
+
 import pygame
 
 letters = {
@@ -39,42 +40,34 @@ class Word(abc.ABC):
   @abc.abstractmethod
   def hide(self):
     '''Text to show to (or hide from) user'''
-    pass
 
   @abc.abstractmethod
   def hint(self):
     '''Determines whether to reveal more of the word'''
-    pass
 
   @abc.abstractmethod
   def guess(self, guess):
     '''Determines whether or not to show the whole word'''
-    pass
 
   @abc.abstractmethod
   def status(self):
     '''The current state of the word'''
-    pass
 
   @abc.abstractmethod
   def matches(self, guess):
     '''Returns true if a guess can reveal a word'''
-    pass
 
   @abc.abstractmethod
   def show(self):
     '''The true form of text'''
-    pass
 
   @abc.abstractmethod
   def guessable(self):
     '''Whether the user can guess about this token'''
-    pass
 
   @abc.abstractmethod
   def key(self):
     '''Input that triggers revealing this word'''
-    pass
 
 
 
@@ -91,13 +84,13 @@ class Ignore(Word):
     return self._text
 
   def hint(self):
-    raise Exception("Cannot provide hints for an ignored word")
+    raise ValueError("Cannot provide hints for an ignored word")
 
   def guess(self, guess):
-    raise Exception("Cannot guess on an ignored word")
+    raise ValueError("Cannot guess on an ignored word")
 
   def matches(self, guess):
-    raise Exception("No match for an ignored word")
+    raise ValueError("No match for an ignored word")
 
   def show(self):
     '''The true form of text'''
@@ -109,7 +102,7 @@ class Ignore(Word):
 
   def key(self):
     '''Input that triggers revealing this word'''
-    raise Exception("Ignorable word has no key")
+    raise ValueError("Ignorable word has no key")
 
 
 class Classic(Word):
@@ -138,7 +131,7 @@ class Classic(Word):
 
   def hint(self):
     if self._index == 0:
-      raise Exception("Cannot allow more hints than letters in word")
+      raise ValueError("Cannot allow more hints than letters in word")
     self._index -= 1
     return self.status()
 

@@ -1,9 +1,8 @@
+'''Present game to user.'''
+
 import abc
 
 import pygame
-
-import Color
-
 
 pygame.init()
 

@@ -1,7 +1,7 @@
+'''Extract data from a file'''
+
 import abc
 
-import Pattern
-import Verse
 
 class Reader:
   '''A supplier of lines of text'''

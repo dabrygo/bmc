@@ -1,5 +1,6 @@
+'''Collection of data for a single screen.'''
+
 import abc
-import re
 import textwrap
 
 import Pattern
@@ -44,7 +45,7 @@ class Fake(Verse):
     return self._text
 
   def lines(self):
-    raise Exception("Not yet implemented")
+    raise NotImplementedError("Not yet implemented")
 
 
 class Default(Verse):
@@ -65,7 +66,7 @@ class Default(Verse):
 
   def text(self):
     pattern = self._pattern()
-    return pattern.group(2)
+    return pattern.group(3)
 
   def lines(self):
     text = self.text()

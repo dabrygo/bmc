@@ -1,4 +1,7 @@
+'''Determine tokens from raw data.'''
+
 import re
+
 
 class Pattern:
   def __init__(self, regex, line):
@@ -14,12 +17,12 @@ class Pattern:
   def group(self, index):
     match = self._match()
     if match is None:
-      raise Exception(f"Regex '{self._regex}' does not match '{self._line}'")
+      raise ValueError(f"Regex '{self._regex}' does not match '{self._line}'")
     return match.group(index)
 
 
 class Verse(Pattern):
   def __init__(self, line):
-    super().__init__(r'(\w+ \d+:\d+) (.+)', line)
+    super().__init__(r'((\w+ ){1,3}\d+:\d+) (.+)', line)
 
 

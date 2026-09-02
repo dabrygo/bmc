@@ -1,7 +1,10 @@
+'''Convert input data into game tokens'''
+
 import abc
 import re
 
 import Word
+
 
 class Tokens(abc.ABC):
   @abc.abstractmethod

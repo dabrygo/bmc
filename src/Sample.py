@@ -1,9 +1,7 @@
-'''A collection of words for a user to guess'''
+'''A collection of words for a user to guess.'''
 
 import abc
-import re
 
-import Tokens
 import Word
 
 
@@ -41,7 +39,7 @@ class Classic(Sample):
     for i, token in enumerate(self._tokens):
       if token.guessable():
         return i, token
-    raise Exception("No guessable tokens found")
+    raise ValueError("No guessable tokens found")
 
   def text(self):
     statuses = [token.status() for token in self._tokens]
@@ -56,7 +54,7 @@ class Classic(Sample):
       if not isinstance(token, Word.Ignore):
         self._index = i
         return
-    raise Exception("No next token found")
+    raise ValueError("No next token found")
 
   def hint(self):
     index, current = self._current()
@@ -75,5 +73,5 @@ class Classic(Sample):
     try:
       _, current = self._current()
       return current.guessable()
-    except Exception:
+    except ValueError:
       return False
