@@ -49,6 +49,10 @@ class TextBox(BlittableText):
   def default(cls, text, color, x, y):
     font_size = 32
     font = pygame.font.SysFont('courier', font_size, bold=True)
+    return TextBox.default_modified(cls, text, font, color, x, y)
+
+  @classmethod
+  def default_modified(cls, text, font, color, x, y):
     text = Text(font, text, color)
     surface = text.surface()
     surface_rectangle = surface.get_rect()

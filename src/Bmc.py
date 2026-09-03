@@ -14,30 +14,76 @@ import Display
 import Parser
 import Reader
 import Sample
+import Score
 import Tokens
 
 # Changeable Properties
 background = Color.Black()
 text_color = Color.White()
-font_size = 32
-font = pygame.font.SysFont('courier', font_size, bold=True)
+font_size = 16
+#print(pygame.font.match_font('cascadiacode'))
+print([x for x in pygame.font.get_fonts() if 'mono' in x])
+font = pygame.font.SysFont('consolas', size=font_size)
 delay = 0.25  # seconds to wait before changing a screen
 
 # Derived Properties
-width = 1200
-height = 400
+n_cols = 120
+n_rows = 30
+avg_char_height = ((.7 + 1.0) / 2) * font_size
+avg_char_width = .6 * font_size
+width = n_cols * avg_char_width
+height = n_rows * avg_char_height
 screen = Display.Screen.size_and_color(width=width, height=height, color=background)
 
 max_chars = 60
 wrapper = textwrap.TextWrapper(max_chars)
 
+correct = Score.Correct()
+incorrect = Score.Incorrect()
+hints = Score.Hints()
+
+def next_start_x(textbox, *, x_offset):
+  '''Where horizontally to start the next textbox'''
+  x_pad = avg_char_width * 5
+  surface = textbox.surface()
+  rect = surface.get_rect()
+  x_rect_start = x_offset + rect.x
+  print(f'x_start: {x_rect_start}')
+  rect_width = rect.width
+  x_rect_end = x_rect_start + rect_width 
+  return x_rect_end + x_pad
+
 def redraw(lines, screen):
+  global correct 
+  global incorrect
+  global hints
+
+  # SCORE
+
+  correct_text = f'Correct: {correct.count():05d}'
+  correct_start = 0
+  correct_textbox = Display.TextBox.default_modified(correct_text, font, text_color, correct_start, 0)
+
+  incorrect_text = f'Incorrect: {incorrect.count():05d}'
+  incorrect_start = next_start_x(correct_textbox, x_offset=0)
+  incorrect_textbox = Display.TextBox.default_modified(incorrect_text, font, text_color, incorrect_start, 0)
+
+  hint_text = f'Hints: {hints.count():05d}'
+  hint_start = next_start_x(incorrect_textbox, x_offset=incorrect_start)
+  hint_textbox = Display.TextBox.default_modified(hint_text, font, text_color, hint_start, 0)
+
   displays = []
+  displays.append(correct_textbox)
+  displays.append(incorrect_textbox)
+  displays.append(hint_textbox)
+
   for i, line in enumerate(lines):
     x = 0
     y = i * font_size
-    textbox = Display.TextBox.default(line, text_color, x, y)
+    textbox = Display.TextBox.default_modified(line, font, text_color, x, y)
+
     displays.append(textbox)
+
   screen.blit(displays)
 
 letters = {
@@ -109,8 +155,9 @@ for verse in verses:
           lines.insert(0, section)
           reference = verse.reference()
           lines.insert(1, reference)
+          correct.increment()
           redraw(lines, screen)          
-        if pressed_keys[HINT_KEY]:
+        elif pressed_keys[HINT_KEY]:
           sample.hint()
           revealed = sample.text()
           lines = wrapper.wrap(revealed)
@@ -118,6 +165,11 @@ for verse in verses:
           lines.insert(0, section)
           reference = verse.reference()
           lines.insert(1, reference)
+          hints.increment()
           redraw(lines, screen)          
+        else:
+          incorrect.increment()
+          redraw(lines, screen)          
+
   time.sleep(delay)
  
