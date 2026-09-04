@@ -20,9 +20,7 @@ import Tokens
 # Changeable Properties
 background = Color.Black()
 text_color = Color.White()
-font_size = 16
-#print(pygame.font.match_font('cascadiacode'))
-print([x for x in pygame.font.get_fonts() if 'mono' in x])
+font_size = 12
 font = pygame.font.SysFont('consolas', size=font_size)
 delay = 0.25  # seconds to wait before changing a screen
 
@@ -41,6 +39,8 @@ wrapper = textwrap.TextWrapper(max_chars)
 correct = Score.Correct()
 incorrect = Score.Incorrect()
 hints = Score.Hints()
+total = Score.Total.Standard(correct, incorrect, hints)
+
 
 def next_start_x(textbox, *, x_offset):
   '''Where horizontally to start the next textbox'''
@@ -48,7 +48,6 @@ def next_start_x(textbox, *, x_offset):
   surface = textbox.surface()
   rect = surface.get_rect()
   x_rect_start = x_offset + rect.x
-  print(f'x_start: {x_rect_start}')
   rect_width = rect.width
   x_rect_end = x_rect_start + rect_width 
   return x_rect_end + x_pad
@@ -57,6 +56,7 @@ def redraw(lines, screen):
   global correct 
   global incorrect
   global hints
+  global total
 
   # SCORE
 
@@ -72,10 +72,16 @@ def redraw(lines, screen):
   hint_start = next_start_x(incorrect_textbox, x_offset=incorrect_start)
   hint_textbox = Display.TextBox.default_modified(hint_text, font, text_color, hint_start, 0)
 
+  score_text = f'Score: {total.value():07d}'
+  score_start = next_start_x(hint_textbox, x_offset=hint_start)
+  score_textbox = Display.TextBox.default_modified(score_text, font, text_color, score_start, 0)
+
+
   displays = []
   displays.append(correct_textbox)
   displays.append(incorrect_textbox)
   displays.append(hint_textbox)
+  displays.append(score_textbox)
 
   for i, line in enumerate(lines):
     x = 0
