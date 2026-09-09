@@ -201,4 +201,18 @@ for verse in verses:
           redraw(lines, screen)          
 
   time.sleep(delay)
- 
+
+# Score screen
+user_exit = False
+displays = redraw_tallies(screen)
+last_display = displays[-1]
+y = last_display.rectangle().y
+y_pad = 10
+continue_y = y + y_pad
+continue_textbox = Display.TextBox.default_modified('Press any key to exit', font, text_color, 0, continue_y)
+displays.append(continue_textbox)
+screen.blit(displays)
+while not user_exit:
+  for event in pygame.event.get():
+    if event.type == pygame.KEYDOWN:
+      user_exit = True
