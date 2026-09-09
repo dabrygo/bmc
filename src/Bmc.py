@@ -2,6 +2,7 @@
 Entry point file for game.
 '''
 
+import csv
 import os.path
 import sys
 import textwrap
@@ -152,6 +153,8 @@ lines = reader.lines()
 parser = Parser.Simple(lines)
 verses = parser.parse(max_width=max_chars)
 
+start_time = time.strftime("%Y-%m-%d %H:%M:%S")
+
 for verse in verses:
   text = verse.text()
   tokens = Tokens.Classic(text)
@@ -216,3 +219,22 @@ while not user_exit:
   for event in pygame.event.get():
     if event.type == pygame.KEYDOWN:
       user_exit = True
+
+game_data = {
+  'Time_Start': start_time,
+  'Score': total.value(),
+  'Correct': correct.count(), 
+  'Incorrect': incorrect.count(), 
+  'Hints': hints.count(), 
+  'Time': timer.count(),
+}
+out_file = 'rsc/scores.csv'
+if not os.path.exists(out_file):
+  write_header = True
+else:
+  write_header = False
+with open(out_file, 'a', newline='') as csvfile:
+  writer = csv.DictWriter(csvfile, delimiter=',', fieldnames=game_data.keys())
+  if write_header:
+    writer.writeheader()
+  writer.writerow(game_data)
