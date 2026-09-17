@@ -9,13 +9,14 @@ import textwrap
 import time
 
 import pygame
+import pygame_gui
 
 import Color
 import Display
 import Parser
 import Reader
-import Sample
 import Score
+import Sample
 import Tokens
 
 # Changeable Properties
@@ -34,6 +35,11 @@ width = n_cols * avg_char_width
 height = n_rows * avg_char_height
 screen = Display.Screen.size_and_color(width=width, height=height, color=background)
 
+manager = pygame_gui.UIManager(
+    (width, height), 
+    theme_path="rsc/bmc_default_theme.json",
+)
+
 # Game timer
 clock = pygame.time.Clock()
 TIMER_EVENT = pygame.USEREVENT + 1 # Define a unique custom event ID
@@ -49,6 +55,11 @@ incorrect = Score.Incorrect()
 hints = Score.Hints()
 timer = Score.Timer()
 total = Score.Total.Standard(correct, incorrect, hints, timer)
+new_correct = Display.ScoreBox(manager, "Correct", 0, (0 * Display.ScoreBox.BOX_SIZE, 0))
+new_incorrect = Display.ScoreBox(manager, "Incorrect", 0, (1 * Display.ScoreBox.BOX_SIZE, 0))
+new_hints = Display.ScoreBox(manager, "Hints", 0, (2 * Display.ScoreBox.BOX_SIZE, 0))
+new_timer = Display.ScoreBox(manager, "Timer", 0, (3 * Display.ScoreBox.BOX_SIZE, 0))
+new_total = Display.ScoreBox(manager, "Score", 0, (4 * Display.ScoreBox.BOX_SIZE, 0))
 
 
 def next_start_x(textbox, *, x_offset):
@@ -103,8 +114,8 @@ def redraw_tallies(screen):
 def redraw(lines, screen):
   displays = redraw_tallies(screen)
   for i, line in enumerate(lines):
-    x = 0
-    y = i * font_size
+    x = 0 
+    y = Display.ScoreBox.BOX_SIZE + i * font_size
     textbox = Display.TextBox.default_modified(line, font, text_color, x, y)
 
     displays.append(textbox)
@@ -168,6 +179,7 @@ for verse in verses:
   redraw(lines, screen)
 
   while sample.guessable():
+    time_delta = clock.tick(60) / MS_PER_SECOND
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
         sys.exit()
@@ -176,6 +188,8 @@ for verse in verses:
       if event.type == TIMER_EVENT:
         timer.increment()
         redraw(lines, screen)
+        new_timer.increment()
+        new_total.set_tally(total.value())
 
       if event.type == pygame.KEYDOWN:
         pressed_keys = pygame.key.get_pressed()
@@ -188,7 +202,8 @@ for verse in verses:
           reference = verse.reference()
           lines.insert(1, reference)
           correct.increment()
-          redraw(lines, screen)          
+          new_correct.increment()
+          redraw(lines, screen)
         elif pressed_keys[HINT_KEY]:
           sample.hint()
           revealed = sample.text()
@@ -199,9 +214,18 @@ for verse in verses:
           lines.insert(1, reference)
           hints.increment()
           redraw(lines, screen)          
+          new_hints.increment()
         else:
           incorrect.increment()
-          redraw(lines, screen)          
+          new_incorrect.increment()
+          redraw(lines, screen)
+    
+        manager.process_events(event)
+
+    manager.update(time_delta)
+    manager.draw_ui(screen.surface())
+
+    pygame.display.update()
 
   time.sleep(delay)
 

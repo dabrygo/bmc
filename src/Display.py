@@ -3,6 +3,7 @@
 import abc
 
 import pygame
+import pygame_gui
 
 pygame.init()
 
@@ -87,5 +88,41 @@ class Screen:
       surface = item.surface()
       rectangle = item.rectangle()
       self._screen.blit(surface, rectangle)
-    pygame.display.update() 
- 
+    pygame.display.update()
+
+  def surface(self):
+    return self._screen
+
+
+class ScoreBox:
+    BOX_SIZE = 100
+
+    def __init__(self, manager, label, increment_rule, position):
+        self._label = label
+        self._tally = 0
+        self._increment_rule = increment_rule
+        self._position = position
+        self._gui_element = pygame_gui.elements.UITextBox(
+            html_text=self._text(),
+            relative_rect=pygame.Rect(
+                self._position,
+                (ScoreBox.BOX_SIZE, ScoreBox.BOX_SIZE)
+            ),
+            manager=manager,
+            object_id=pygame_gui.core.ObjectID(
+                class_id='@score_box',
+                object_id=f'#score_box_{self._label.lower()}'
+            )
+        )
+
+    def _text(self):
+        return f"{self._label.title()}\n{self._tally:05d}"
+
+    def increment(self):
+      self.set_tally(self._tally + 1)
+
+    def set_tally(self, tally):
+      self._tally = tally
+      text = self._text()
+      self._gui_element.set_text(text)
+
