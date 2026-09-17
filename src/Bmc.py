@@ -50,23 +50,21 @@ pygame.time.set_timer(TIMER_EVENT, millis=MS_PER_SECOND)
 max_chars = 60
 wrapper = textwrap.TextWrapper(max_chars)
 
-new_correct = Display.ScoreBox(manager, "Correct", 0, (0 * Display.ScoreBox.BOX_SIZE, 0))
-new_incorrect = Display.ScoreBox(manager, "Incorrect", 0, (1 * Display.ScoreBox.BOX_SIZE, 0))
-new_hints = Display.ScoreBox(manager, "Hints", 0, (2 * Display.ScoreBox.BOX_SIZE, 0))
-new_timer = Display.ScoreBox(manager, "Timer", 0, (3 * Display.ScoreBox.BOX_SIZE, 0))
-total = Score.Total.Standard(new_correct, new_incorrect, new_hints, new_timer)
-new_score = Display.ScoreBox(manager, "Score", 0, (4 * Display.ScoreBox.BOX_SIZE, 0))
+correct = Score.Correct()
+correct_box = Display.ScoreBox(manager, "Correct", (0 * Display.ScoreBox.BOX_SIZE, 0))
 
+incorrect = Score.Incorrect()
+incorrect_box = Display.ScoreBox(manager, "Incorrect", (1 * Display.ScoreBox.BOX_SIZE, 0))
 
-def next_start_x(textbox, *, x_offset):
-  '''Where horizontally to start the next textbox'''
-  x_pad = avg_char_width * 5
-  surface = textbox.surface()
-  rect = surface.get_rect()
-  x_rect_start = x_offset + rect.x
-  rect_width = rect.width
-  x_rect_end = x_rect_start + rect_width 
-  return x_rect_end + x_pad
+hints = Score.Hints()
+hints_box = Display.ScoreBox(manager, "Hints", (2 * Display.ScoreBox.BOX_SIZE, 0))
+
+timer = Score.Timer()
+timer_box = Display.ScoreBox(manager, "Timer", (3 * Display.ScoreBox.BOX_SIZE, 0))
+
+total = Score.Total.Standard(correct, incorrect, hints, timer)
+total_box = Display.ScoreBox(manager, "Score", (4 * Display.ScoreBox.BOX_SIZE, 0))
+
 
 def redraw(lines, screen):
   displays = []
@@ -144,8 +142,9 @@ for verse in verses:
       # Timer
       if event.type == TIMER_EVENT:
         redraw(lines, screen)
-        new_timer.increment()
-        new_score.set_tally(total.value())
+        timer.increment()
+        timer_box.set_tally(timer.count())
+        total_box.set_tally(total.value())
 
       if event.type == pygame.KEYDOWN:
         pressed_keys = pygame.key.get_pressed()
@@ -157,7 +156,8 @@ for verse in verses:
           lines.insert(0, section)
           reference = verse.reference()
           lines.insert(1, reference)
-          new_correct.increment()
+          correct.increment()
+          correct_box.set_tally(correct.count())
           redraw(lines, screen)
         elif pressed_keys[HINT_KEY]:
           sample.hint()
@@ -168,9 +168,11 @@ for verse in verses:
           reference = verse.reference()
           lines.insert(1, reference)
           redraw(lines, screen)          
-          new_hints.increment()
+          hints.increment()
+          hints_box.set_tally(hints.count())
         else:
-          new_incorrect.increment()
+          incorrect.increment()
+          incorrect_box.set_tally(incorrect.count())
           redraw(lines, screen)
     
         manager.process_events(event)
@@ -188,7 +190,8 @@ y = Display.ScoreBox.BOX_SIZE
 y_pad = 10
 continue_y = y + y_pad
 continue_textbox = Display.TextBox.default_modified('Press any key to exit', font, text_color, 0, continue_y)
-screen.blit(continue_textbox)
+displays = [continue_textbox]
+screen.blit(displays)
 while not user_exit:
   for event in pygame.event.get():
     if event.type == pygame.KEYDOWN:
@@ -197,10 +200,10 @@ while not user_exit:
 game_data = {
   'Time_Start': start_time,
   'Score': total.value(),
-  'Correct': new_correct.count(), 
-  'Incorrect': new_incorrect.count(), 
-  'Hints': new_hints.count(), 
-  'Time': new_timer.count(),
+  'Correct': correct.count(), 
+  'Incorrect': correct.count(), 
+  'Hints': hints.count(), 
+  'Time': timer.count(),
 }
 out_file = 'rsc/scores.csv'
 if not os.path.exists(out_file):

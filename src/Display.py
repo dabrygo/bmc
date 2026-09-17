@@ -96,10 +96,9 @@ class Screen:
 class ScoreBox:
     BOX_SIZE = 100
 
-    def __init__(self, manager, label, increment_rule, position):
+    def __init__(self, manager, label, position):
         self._label = label
         self._tally = 0
-        self._increment_rule = increment_rule
         self._position = position
         self._gui_element = pygame_gui.elements.UITextBox(
             html_text=self._text(),
