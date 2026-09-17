@@ -69,7 +69,6 @@ class TextBox(BlittableText):
     return self._rectangle
 
 
-
 class Screen:
   def __init__(self, screen, color):
     self._screen = screen
@@ -126,3 +125,5 @@ class ScoreBox:
       text = self._text()
       self._gui_element.set_text(text)
 
+    def tally(self):
+      return self._tally

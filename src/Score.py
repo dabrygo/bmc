@@ -50,7 +50,7 @@ class Score:
     self._multiplier = multiplier
 
   def value(self):
-    return self._tally.count() * self._multiplier
+    return self._tally.tally() * self._multiplier
 
 
 class Total:
