@@ -7,6 +7,10 @@ import pygame_gui
 
 pygame.init()
 
+def htmlify(text):
+  return '<font face="consolas">' + text + '</span>'
+
+
 # TODO Do we need to call init() for text? 
 class Text:
   def __init__(self, font, text, color):
@@ -93,6 +97,22 @@ class Screen:
     return self._screen
 
 
+class NewTextBox:
+  def __init__(self, manager, label, position, size, text):
+    self._gui_element = pygame_gui.elements.UITextBox(
+        html_text=htmlify(text),
+        relative_rect=pygame.Rect(position, size),
+        manager=manager,
+        object_id=pygame_gui.core.ObjectID(
+            class_id='@new_text_box',
+            object_id=f'#new_text_box_{label.lower()}'
+        )
+    )
+
+  def set_text(self, text):
+    self._gui_element.set_text(htmlify(text))
+
+
 class ScoreBox:
     BOX_SIZE = 100
 
@@ -114,7 +134,7 @@ class ScoreBox:
         )
 
     def _text(self):
-        return f"{self._label.title()}\n{self._tally:05d}"
+        return htmlify(f"{self._label.title()}\n{self._tally:05d}")
 
     def increment(self):
       self.set_tally(self._tally + 1)
