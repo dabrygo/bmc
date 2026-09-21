@@ -1,76 +1,12 @@
 '''Present game to user.'''
 
-import abc
-
 import pygame
 import pygame_gui
 
 pygame.init()
 
 def htmlify(text):
-  return '<font face="consolas">' + text + '</span>'
-
-
-# TODO Do we need to call init() for text? 
-class Text:
-  def __init__(self, font, text, color):
-    self._font = font
-    self._text = text
-    self._color = color
-
-  def surface(self):
-    rgb = self._color.rgb()
-    return self._font.render(self._text, True, rgb)
-
-
-class Box:
-  def __init__(self, x, y, width, height):
-    self._x = x
-    self._y = y
-    self._width = width
-    self._height = height
-
-  def rectangle(self):
-    return pygame.rect.Rect(self._x, self._y, self._width, self._height)
-
-
-# TODO Use ABC on Blittable and make TextBox a subclass
-class BlittableText(abc.ABC):
-  @abc.abstractmethod
-  def surface(self):
-    pass
-
-  @abc.abstractmethod
-  def rectangle(self):
-    pass
-
-
-class TextBox(BlittableText):
-  def __init__(self, surface, rectangle):
-    self._surface = surface
-    self._rectangle = rectangle
-
-  @classmethod
-  def default(cls, text, color, x, y):
-    font_size = 32
-    font = pygame.font.SysFont('courier', font_size, bold=True)
-    return TextBox.default_modified(cls, text, font, color, x, y)
-
-  @classmethod
-  def default_modified(cls, text, font, color, x, y):
-    text = Text(font, text, color)
-    surface = text.surface()
-    surface_rectangle = surface.get_rect()
-    width = surface_rectangle.width
-    height = surface_rectangle.height
-    rectangle = pygame.rect.Rect(x, y, width, height)
-    return cls(surface, rectangle)
-
-  def surface(self):
-    return self._surface
-
-  def rectangle(self):
-    return self._rectangle
+  return f'<font face="consolas">' + text + '</span>'
 
 
 class Screen:
@@ -97,7 +33,8 @@ class Screen:
     return self._screen
 
 
-class NewTextBox:
+class ContentBox:
+  '''A text box that contains game content (as opposed to score)'''
   def __init__(self, manager, label, position, size, text):
     self._gui_element = pygame_gui.elements.UITextBox(
         html_text=htmlify(text),

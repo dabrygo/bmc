@@ -4,13 +4,15 @@
 class Tally:
   '''Keeps track of how many times something happens.'''
 
-  def __init__(self):
-    self._count = 0
+  def __init__(self, count_start=0):
+    self._count = count_start
 
   def increment(self):
+    '''Adds to the tally.'''
     self._count += 1
 
   def count(self):
+    '''Returns the tally.'''
     return self._count
 
 
@@ -57,7 +59,17 @@ class Total:
   '''Calculates the total score.'''
 
   @classmethod
+  def Fake(cls, n_correct=0, n_incorrect=0, n_hints=0, time=0):
+    return Total.Standard(
+      correct=Tally(n_correct),
+      incorrect=Tally(n_incorrect),
+      hints=Tally(n_hints),
+      timer=Tally(time)
+    )
+
+  @classmethod
   def Standard(cls, correct, incorrect, hints, timer):
+    '''Uses conventional multipliers to calculate score.'''
     correct_score = Score(correct, multiplier=100)
     incorrect_score = Score(incorrect, multiplier=50)
     hints_score = Score(hints, multiplier=25)

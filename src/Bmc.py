@@ -67,7 +67,9 @@ hints_box = Display.ScoreBox(manager, "Hints", (2 * Display.ScoreBox.BOX_SIZE, 0
 timer = Score.Timer()
 timer_box = Display.ScoreBox(manager, "Timer", (3 * Display.ScoreBox.BOX_SIZE, 0))
 
-total = Score.Total.Standard(correct, incorrect, hints, timer)
+total = Score.Total.Standard(
+  correct=correct, incorrect=incorrect, hints=hints, timer=timer
+)
 total_box = Display.ScoreBox(manager, "Score", (4 * Display.ScoreBox.BOX_SIZE, 0))
 
 screen_lines = []
@@ -81,7 +83,7 @@ def init_screen():
   for i in range(N_SCREEN_LINES):
     x = 0 
     y = Display.ScoreBox.BOX_SIZE + i * box_height 
-    text_box = Display.NewTextBox(
+    text_box = Display.ContentBox(
       manager=manager, 
       label=f"verse_{i}",
       position=(x, y), 
@@ -215,15 +217,12 @@ update_screen_text(lines)
 manager.update(time_delta)
 manager.draw_ui(screen.surface())
 pygame.display.update()
-
-#continue_textbox = Display.TextBox.default_modified('Press any key to exit', font, text_color, 0, continue_y)
-#displays = [continue_textbox]
-#screen.blit(displays)
 while not user_exit:
   for event in pygame.event.get():
     if event.type == pygame.KEYDOWN:
       user_exit = True
 
+# Save game data to file
 game_data = {
   'Time_Start': start_time,
   'Score': total.value(),
