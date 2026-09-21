@@ -2,5 +2,8 @@
 /.project
 /.pydevproject
 
+.coverage
+htmlcov
+
 venv
 rsc

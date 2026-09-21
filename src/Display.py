@@ -1,68 +1,12 @@
 '''Present game to user.'''
 
-import abc
-
 import pygame
+import pygame_gui
 
 pygame.init()
 
-# TODO Do we need to call init() for text? 
-class Text:
-  def __init__(self, font, text, color):
-    self._font = font
-    self._text = text
-    self._color = color
-
-  def surface(self):
-    rgb = self._color.rgb()
-    return self._font.render(self._text, True, rgb)
-
-
-class Box:
-  def __init__(self, x, y, width, height):
-    self._x = x
-    self._y = y
-    self._width = width
-    self._height = height
-
-  def rectangle(self):
-    return pygame.rect.Rect(self._x, self._y, self._width, self._height)
-
-
-# TODO Use ABC on Blittable and make TextBox a subclass
-class BlittableText(abc.ABC):
-  @abc.abstractmethod
-  def surface(self):
-    pass
-
-  @abc.abstractmethod
-  def rectangle(self):
-    pass
-
-
-class TextBox(BlittableText):
-  def __init__(self, surface, rectangle):
-    self._surface = surface
-    self._rectangle = rectangle
-
-  @classmethod
-  def default(cls, text, color, x, y):
-    font_size = 32
-    font = pygame.font.SysFont('courier', font_size, bold=True)
-    text = Text(font, text, color)
-    surface = text.surface()
-    surface_rectangle = surface.get_rect()
-    width = surface_rectangle.width
-    height = surface_rectangle.height
-    rectangle = pygame.rect.Rect(x, y, width, height)
-    return cls(surface, rectangle)
-
-  def surface(self):
-    return self._surface
-
-  def rectangle(self):
-    return self._rectangle
-
+def htmlify(text):
+  return f'<font face="consolas">' + text + '</span>'
 
 
 class Screen:
@@ -83,5 +27,59 @@ class Screen:
       surface = item.surface()
       rectangle = item.rectangle()
       self._screen.blit(surface, rectangle)
-    pygame.display.update() 
- 
+    pygame.display.update()
+
+  def surface(self):
+    return self._screen
+
+
+class ContentBox:
+  '''A text box that contains game content (as opposed to score)'''
+  def __init__(self, manager, label, position, size, text):
+    self._gui_element = pygame_gui.elements.UITextBox(
+        html_text=htmlify(text),
+        relative_rect=pygame.Rect(position, size),
+        manager=manager,
+        object_id=pygame_gui.core.ObjectID(
+            class_id='@new_text_box',
+            object_id=f'#new_text_box_{label.lower()}'
+        )
+    )
+
+  def set_text(self, text):
+    self._gui_element.set_text(htmlify(text))
+
+
+class ScoreBox:
+    BOX_SIZE = 100
+
+    def __init__(self, manager, label, position):
+        self._label = label
+        self._tally = 0
+        self._position = position
+        self._gui_element = pygame_gui.elements.UITextBox(
+            html_text=self._text(),
+            relative_rect=pygame.Rect(
+                self._position,
+                (ScoreBox.BOX_SIZE, ScoreBox.BOX_SIZE)
+            ),
+            manager=manager,
+            object_id=pygame_gui.core.ObjectID(
+                class_id='@score_box',
+                object_id=f'#score_box_{self._label.lower()}'
+            )
+        )
+
+    def _text(self):
+        return htmlify(f"{self._label.title()}\n{self._tally:05d}")
+
+    def increment(self):
+      self.set_tally(self._tally + 1)
+
+    def set_tally(self, tally):
+      self._tally = tally
+      text = self._text()
+      self._gui_element.set_text(text)
+
+    def tally(self):
+      return self._tally

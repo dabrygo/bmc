@@ -2,43 +2,106 @@
 Entry point file for game.
 '''
 
+import csv
 import os.path
 import sys
 import textwrap
 import time
 
 import pygame
+import pygame_gui
 
 import Color
 import Display
 import Parser
 import Reader
+import Score
 import Sample
 import Tokens
 
 # Changeable Properties
 background = Color.Black()
 text_color = Color.White()
-font_size = 32
-font = pygame.font.SysFont('courier', font_size, bold=True)
+font_size = 24
+font_face = 'Consolas'
+font_path = "c:/windows/fonts/consolas.ttf"
+font = pygame.font.SysFont(font_face, size=font_size)
 delay = 0.25  # seconds to wait before changing a screen
 
 # Derived Properties
-width = 1200
+#n_cols = 120
+#n_rows = 30
+#avg_char_height = ((.7 + 1.0) / 2) * font_size
+#avg_char_width = .6 * font_size
+#width = n_cols * avg_char_width
+#height = n_rows * avg_char_height
+width = 800
 height = 400
 screen = Display.Screen.size_and_color(width=width, height=height, color=background)
+
+manager = pygame_gui.UIManager(
+    (width, height), 
+    theme_path="rsc/bmc_default_theme.json",
+)
+
+manager.add_font_paths(font_face, font_path)
+# Game timer
+clock = pygame.time.Clock()
+TIMER_EVENT = pygame.USEREVENT + 1 # Define a unique custom event ID
+# Set the timer to trigger every second 
+MS_PER_SECOND = 1000
+pygame.time.set_timer(TIMER_EVENT, millis=MS_PER_SECOND) 
 
 max_chars = 60
 wrapper = textwrap.TextWrapper(max_chars)
 
-def redraw(lines, screen):
-  displays = []
-  for i, line in enumerate(lines):
-    x = 0
-    y = i * font_size
-    textbox = Display.TextBox.default(line, text_color, x, y)
-    displays.append(textbox)
-  screen.blit(displays)
+correct = Score.Correct()
+correct_box = Display.ScoreBox(manager, "Correct", (0 * Display.ScoreBox.BOX_SIZE, 0))
+
+incorrect = Score.Incorrect()
+incorrect_box = Display.ScoreBox(manager, "Incorrect", (1 * Display.ScoreBox.BOX_SIZE, 0))
+
+hints = Score.Hints()
+hints_box = Display.ScoreBox(manager, "Hints", (2 * Display.ScoreBox.BOX_SIZE, 0))
+
+timer = Score.Timer()
+timer_box = Display.ScoreBox(manager, "Timer", (3 * Display.ScoreBox.BOX_SIZE, 0))
+
+total = Score.Total.Standard(
+  correct=correct, incorrect=incorrect, hints=hints, timer=timer
+)
+total_box = Display.ScoreBox(manager, "Score", (4 * Display.ScoreBox.BOX_SIZE, 0))
+
+screen_lines = []
+N_SCREEN_LINES = 8
+
+def init_screen():
+  global screen_lines
+
+  screen_lines = []
+  box_height = font_size + 10
+  for i in range(N_SCREEN_LINES):
+    x = 0 
+    y = Display.ScoreBox.BOX_SIZE + i * box_height 
+    text_box = Display.ContentBox(
+      manager=manager, 
+      label=f"verse_{i}",
+      position=(x, y), 
+      size=(600, box_height), 
+      text=""
+    )
+    screen_lines.append(text_box)
+
+def update_screen_text(lines):
+  global screen_lines
+  assert len(lines) <= N_SCREEN_LINES
+  for i in range(N_SCREEN_LINES):
+    text_box = screen_lines[i]
+    if i < len(lines):
+      line = lines[i]
+    else:
+      line = ""
+    text_box.set_text(line)
 
 letters = {
          pygame.K_a: 'a',
@@ -82,6 +145,9 @@ lines = reader.lines()
 parser = Parser.Simple(lines)
 verses = parser.parse(max_width=max_chars)
 
+start_time = time.strftime("%Y-%m-%d %H:%M:%S")
+
+init_screen()
 for verse in verses:
   text = verse.text()
   tokens = Tokens.Classic(text)
@@ -92,12 +158,19 @@ for verse in verses:
   lines.insert(0, section)
   reference = verse.reference()
   lines.insert(1, reference)
-  redraw(lines, screen)
-
+  update_screen_text(lines)
+   
   while sample.guessable():
+    time_delta = clock.tick(60) / MS_PER_SECOND
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
         sys.exit()
+
+      # Timer
+      if event.type == TIMER_EVENT:
+        timer.increment()
+        timer_box.set_tally(timer.count())
+        total_box.set_tally(total.value())
 
       if event.type == pygame.KEYDOWN:
         pressed_keys = pygame.key.get_pressed()
@@ -109,8 +182,10 @@ for verse in verses:
           lines.insert(0, section)
           reference = verse.reference()
           lines.insert(1, reference)
-          redraw(lines, screen)          
-        if pressed_keys[HINT_KEY]:
+          correct.increment()
+          correct_box.set_tally(correct.count())
+          update_screen_text(lines)
+        elif pressed_keys[HINT_KEY]:
           sample.hint()
           revealed = sample.text()
           lines = wrapper.wrap(revealed)
@@ -118,6 +193,51 @@ for verse in verses:
           lines.insert(0, section)
           reference = verse.reference()
           lines.insert(1, reference)
-          redraw(lines, screen)          
+          update_screen_text(lines)
+          hints.increment()
+          hints_box.set_tally(hints.count())
+        else:
+          incorrect.increment()
+          incorrect_box.set_tally(incorrect.count())
+          update_screen_text(lines)
+
+        manager.process_events(event)
+
+    manager.update(time_delta)
+    manager.draw_ui(screen.surface())
+
+    pygame.display.update()
+
   time.sleep(delay)
- 
+
+# Score screen
+user_exit = False
+lines = ['', '', 'Press any key to exit']
+update_screen_text(lines)
+manager.update(time_delta)
+manager.draw_ui(screen.surface())
+pygame.display.update()
+while not user_exit:
+  for event in pygame.event.get():
+    if event.type == pygame.KEYDOWN:
+      user_exit = True
+
+# Save game data to file
+game_data = {
+  'Time_Start': start_time,
+  'Score': total.value(),
+  'Correct': correct.count(), 
+  'Incorrect': correct.count(), 
+  'Hints': hints.count(), 
+  'Time': timer.count(),
+}
+out_file = 'rsc/scores.csv'
+if not os.path.exists(out_file):
+  write_header = True
+else:
+  write_header = False
+with open(out_file, 'a', newline='') as csvfile:
+  writer = csv.DictWriter(csvfile, delimiter=',', fieldnames=game_data.keys())
+  if write_header:
+    writer.writeheader()
+  writer.writerow(game_data)
