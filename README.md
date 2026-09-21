@@ -19,6 +19,15 @@ To run test suite:
 > python -m unittest discover
 ```
 
+To view test coverage:
+
+```
+> cd src
+> coverage run -m unittest discover
+> coverage report # for text report OR
+> coverage html # for html report
+```
+
 ## Quickstart
 
 Input files currently expected to be of the form:
