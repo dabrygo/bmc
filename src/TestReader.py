@@ -9,7 +9,7 @@ class TestSimple(unittest.TestCase):
     lines = ['Section', 'Book 1:23 Verse verse verse']
     parser = Parser.Simple(lines)
     expected = Verse.Fake(section='Section', reference='Book 1:23', text='Verse verse verse')
-    verses = parser.parse(max_width=100)
+    verses = parser.parse()
     actual = verses[0]
     self.assertEqual(expected, actual)
 

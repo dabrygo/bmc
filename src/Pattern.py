@@ -4,6 +4,7 @@ import re
 
 
 class Pattern:
+  '''Adapter/facade for Python `re` (regex) module'''
   def __init__(self, regex, line):
     self._regex = regex
     self._line = line

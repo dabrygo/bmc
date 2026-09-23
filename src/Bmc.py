@@ -143,7 +143,7 @@ path = os.path.join(directory, filename)
 reader = Reader.File(path)
 lines = reader.lines()
 parser = Parser.Simple(lines)
-verses = parser.parse(max_width=max_chars)
+verses = parser.parse()
 
 start_time = time.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -169,8 +169,10 @@ for verse in verses:
       # Timer
       if event.type == TIMER_EVENT:
         timer.increment()
-        timer_box.set_tally(timer.count())
-        total_box.set_tally(total.value())
+        time_now = timer.count()
+        timer_box.set_tally(time_now)
+        updated_score = total.value()
+        total_box.set_tally(updated_score)
 
       if event.type == pygame.KEYDOWN:
         pressed_keys = pygame.key.get_pressed()

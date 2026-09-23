@@ -1,7 +1,6 @@
 '''Collection of data for a single screen.'''
 
 import abc
-import textwrap
 
 import Pattern
 
@@ -14,18 +13,22 @@ class Verse:
 
   @abc.abstractmethod
   def reference(self):
+    '''Unique identifier for this verse.'''
     pass
 
   @abc.abstractmethod
   def section(self):
+    '''Contextual description of this verse and other verses near it.'''
     pass
 
   @abc.abstractmethod
   def text(self):
+    '''Plain text of this verse.'''
     pass
 
   @abc.abstractmethod
   def lines(self):
+    '''Text of this verse as it appears originally. (Preserves whitespace, e.g.)'''
     pass
 
 
@@ -49,10 +52,9 @@ class Fake(Verse):
 
 
 class Default(Verse):
-  def __init__(self, section, text, max_width=None):
+  def __init__(self, section, text):
     self._section = section
     self._text = text
-    self._max_width = max_width
 
   def _pattern(self):
     return Pattern.Verse(self._text)
@@ -69,11 +71,7 @@ class Default(Verse):
     return pattern.group(3)
 
   def lines(self):
-    text = self.text()
-    if not self._max_width:
-      return text
-    wrapper = textwrap.TextWrapper(self._max_width)
-    return wrapper.wrap(text)
+    return self.text()
 
 
 class Blanked(Verse):
@@ -92,6 +90,3 @@ class Blanked(Verse):
 
   def lines(self):
     return self._verse.lines()
-
-
-
