@@ -105,6 +105,60 @@ class Ignore(Word):
     raise ValueError("Ignorable word has no key")
 
 
+class Raw(Word):
+  '''A showing (unblanked, visible) word'''
+
+  def __init__(self, text, character='_'):
+    self._text = text
+    self._index = 0
+    self._character = character
+
+  def __str__(self):
+    return self.status()
+
+  # FIXME: Update this to follow eval(repr) contract 
+  def __repr__(self):
+    return self._text
+  
+  def hide(self):
+    return self._character * len(self._text)
+
+  def status(self):
+    blanked = self._text[:self._index]
+    showing = self._text[self._index:]
+    blanks = self._character * len(blanked)
+    return blanks + showing
+
+  def hint(self):
+    if self._index == 0:
+      raise ValueError("Cannot allow more hints than letters in word")
+    self._index -= 1
+    return self.status()
+
+  def guess(self, guess):
+    if self.matches(guess):
+      return self._text
+    return self.status()
+
+  def matches(self, guess):
+    '''Returns True if a guess is correct'''
+    guess_lower = guess.lower()
+    text_lower = self._text.lower()
+    return text_lower.startswith(guess_lower)
+
+  def show(self):
+    '''The true form of text'''
+    return self._text
+
+  def guessable(self):
+    '''Return False if word is fully shown; True otherwise'''
+    return self.status() != self._text
+
+  def key(self):
+   letter = self._text[0].lower()
+   return letters[letter] 
+
+
 class Classic(Word):
   '''A blanked word whose hints reveal one letter at the time from the end'''
 

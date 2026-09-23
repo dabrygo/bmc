@@ -111,11 +111,21 @@ def update_screen_text(raw_text, verse=None):
       line = ""
     text_box.set_text(line)
 
+def game_mode(mode):
+  if mode == 1:
+    return GameMode.RandomWord
+  elif mode == 4:
+    return GameMode.AllBlank
+  elif mode in [2, 3]:
+    raise NotImplemented(f"Game mode {mode} not implemented")
+  else:
+    raise ValueError(f"Unsupported game mode {mode}")
+
 HINT_KEY = pygame.K_SLASH
 
 directory = 'rsc/books'
 #book = 'John'
-book = '3_John'
+book = '3_John copy'
 #book = 'Philemon' 
 filename = book + '.txt'
 path = os.path.join(directory, filename)
@@ -126,9 +136,17 @@ verses = parser.parse()
 
 start_time = time.strftime("%Y-%m-%d %H:%M:%S")
 
+GAME_MODE = 4
+MODE_1_GUESSES = 2
+
 init_screen()
 for verse in verses:
-  mode = GameMode.AllBlank(verse)
+  # FIXME Don't check GAME_MODE in function and `if`
+  mode_type = game_mode(GAME_MODE)
+  if GAME_MODE == 1:
+    mode = mode_type(verse, n_guesses=MODE_1_GUESSES)
+  elif GAME_MODE == 4:
+    mode = mode_type(verse)
 
   content = mode.content()
   update_screen_text(raw_text=content, verse=verse)
@@ -214,6 +232,7 @@ game_data = {
   'Incorrect': correct.count(), 
   'Hints': hints.count(), 
   'Time': timer.count(),
+  'Game_Mode': GAME_MODE,
 }
 out_file = 'rsc/scores.csv'
 if not os.path.exists(out_file):

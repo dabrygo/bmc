@@ -1,11 +1,13 @@
 '''Determines how to complete a screen in a game.'''
 
 import abc
+import random
 
 import pygame
 
 import Sample
 import Tokens
+import Word
 
 letters = {
   pygame.K_a: 'a',
@@ -70,24 +72,65 @@ class GameMode:
     pass
 
 
-
 class RandomWord(GameMode):
-    '''User guesses randomly selected words one at a time.'''
-    def __init__(self, verse):
-       self._verse = verse
+  '''User guesses randomly selected words one at a time.'''
+  def __init__(self, verse, n_guesses=5):
+    self._verse = verse
+    self._i_guess = 0
+    self._n_guesses = n_guesses
+    text = self._verse.text()
+    tokens = Tokens.NoBlanking(text)
+    self._tokenized = tokens.tokenize()
+ 
+  def _random_index(self, tokens):
+    non_ignore_indices = []
+    for i, token in enumerate(tokens):
+      if not isinstance(token, Word.Ignore):
+        non_ignore_indices.append(i)
+    return random.choice(non_ignore_indices)
 
-    def content(self):
-      text = self._verse.text()
-      tokens = Tokens.Classic(text)
-      tokenized = tokens.tokenize()
-      sample = Sample.Classic(tokenized)
-      lines = sample.text()
-      section = self._verse.section()
-      lines.insert(0, section)
-      reference = self._verse.reference()
-      lines.insert(1, reference)
-      return lines
+  def _hide_word(self):
+    i_hide = self._random_index(self._tokenized)
+    new_tokens = []
+    for i, token in enumerate(self._tokenized):
+      if i == i_hide:
+        token = Word.Classic(token.show())
+        new_tokens.append(token)
+      else:
+        token.show()
+        new_tokens.append(token)
+    self._sample = Sample.Classic(new_tokens)
+ 
+  def content(self):
+    self._hide_word()
+    lines = self._sample.text()
+    return lines
 
+  def _more_guesses_remaining(self):
+    return self._i_guess < self._n_guesses
+
+  def must_guess_again(self):
+    return self._sample.guessable() and self._more_guesses_remaining()
+
+  def expected_input(self):
+    return self._sample.key()
+
+  def on_hint(self):
+    self._sample.hint()
+    return self._sample.text()
+
+  def on_correct_guess(self):
+    key = self._sample.key()
+    letter = letters[key]
+    self._sample.guess(letter)
+    self._i_guess += 1
+    if self._more_guesses_remaining():
+      self._hide_word()
+    return self._sample.text()
+
+  def on_incorrect_guess(self):
+    return self._sample.text()
+ 
 
 class AllBlank:
   '''User guesses all words.'''
