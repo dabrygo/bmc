@@ -13,11 +13,10 @@ import pygame_gui
 
 import Color
 import Display
+import GameMode
 import Parser
 import Reader
 import Score
-import Sample
-import Tokens
 
 # Changeable Properties
 background = Color.Black()
@@ -92,45 +91,25 @@ def init_screen():
     )
     screen_lines.append(text_box)
 
-def update_screen_text(lines):
+def update_screen_text(raw_text, verse=None):
   global screen_lines
-  assert len(lines) <= N_SCREEN_LINES
+
+  # Wrap text to fit on screen
+  wrapped = wrapper.wrap(raw_text)
+  if verse:
+    section = verse.section()
+    wrapped.insert(0, section)
+    reference = verse.reference()
+    wrapped.insert(1, reference)
+  assert len(wrapped) <= N_SCREEN_LINES
+
   for i in range(N_SCREEN_LINES):
     text_box = screen_lines[i]
-    if i < len(lines):
-      line = lines[i]
+    if i < len(wrapped):
+      line = wrapped[i]
     else:
       line = ""
     text_box.set_text(line)
-
-letters = {
-         pygame.K_a: 'a',
-         pygame.K_b: 'b',
-         pygame.K_c: 'c',
-         pygame.K_d: 'd',
-         pygame.K_e: 'e',
-         pygame.K_f: 'f',
-         pygame.K_g: 'g',
-         pygame.K_h: 'h',
-         pygame.K_i: 'i',
-         pygame.K_j: 'j',
-         pygame.K_k: 'k',
-         pygame.K_l: 'l',
-         pygame.K_m: 'm',
-         pygame.K_n: 'n',
-         pygame.K_o: 'o',
-         pygame.K_p: 'p',
-         pygame.K_q: 'q',
-         pygame.K_r: 'r',
-         pygame.K_s: 's',
-         pygame.K_t: 't',
-         pygame.K_u: 'u',
-         pygame.K_v: 'v',
-         pygame.K_w: 'w',
-         pygame.K_x: 'x',
-         pygame.K_y: 'y',
-         pygame.K_z: 'z',
-       }
 
 HINT_KEY = pygame.K_SLASH
 
@@ -149,18 +128,12 @@ start_time = time.strftime("%Y-%m-%d %H:%M:%S")
 
 init_screen()
 for verse in verses:
-  text = verse.text()
-  tokens = Tokens.Classic(text)
-  tokenized = tokens.tokenize()
-  sample = Sample.Classic(tokenized)
-  lines = wrapper.wrap(sample.text())
-  section = verse.section()
-  lines.insert(0, section)
-  reference = verse.reference()
-  lines.insert(1, reference)
-  update_screen_text(lines)
+  mode = GameMode.AllBlank(verse)
+
+  content = mode.content()
+  update_screen_text(raw_text=content, verse=verse)
    
-  while sample.guessable():
+  while mode.must_guess_again():
     time_delta = clock.tick(60) / MS_PER_SECOND
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
@@ -176,37 +149,39 @@ for verse in verses:
 
       if event.type == pygame.KEYDOWN:
         pressed_keys = pygame.key.get_pressed()
-        if pressed_keys[sample.key()]:
-          sample.guess(letters[sample.key()])
-          revealed = sample.text()
-          lines = wrapper.wrap(revealed)
-          section = verse.section()
-          lines.insert(0, section)
-          reference = verse.reference()
-          lines.insert(1, reference)
+
+        expected_input = mode.expected_input()
+        is_correct = pressed_keys[expected_input]
+
+        is_hint = pressed_keys[HINT_KEY]
+
+        if is_correct:
           correct.increment()
-          correct_box.set_tally(correct.count())
-          update_screen_text(lines)
-        elif pressed_keys[HINT_KEY]:
-          sample.hint()
-          revealed = sample.text()
-          lines = wrapper.wrap(revealed)
-          section = verse.section()
-          lines.insert(0, section)
-          reference = verse.reference()
-          lines.insert(1, reference)
-          update_screen_text(lines)
+          n_correct = correct.count()
+          correct_box.set_tally(n_correct)
+
+          text = mode.on_correct_guess()
+          update_screen_text(text, verse=verse)
+        elif is_hint:
           hints.increment()
-          hints_box.set_tally(hints.count())
-        else:
+          n_hints = hints.count()
+          hints_box.set_tally(n_hints)
+
+          text = mode.on_hint()
+          update_screen_text(text, verse=verse)
+        else: # is_incorrect
           incorrect.increment()
-          incorrect_box.set_tally(incorrect.count())
-          update_screen_text(lines)
+          n_incorrect = incorrect.count()
+          incorrect_box.set_tally(n_incorrect)
+
+          text = mode.on_incorrect_guess()
+          update_screen_text(text, verse=verse)
 
         manager.process_events(event)
 
     manager.update(time_delta)
-    manager.draw_ui(screen.surface())
+    background = screen.surface()
+    manager.draw_ui(background)
 
     pygame.display.update()
 
@@ -214,15 +189,22 @@ for verse in verses:
 
 # Score screen
 user_exit = False
-lines = ['', '', 'Press any key to exit']
-update_screen_text(lines)
+text = 'Press any key to exit'
+update_screen_text(text)
+
 manager.update(time_delta)
-manager.draw_ui(screen.surface())
+background = screen.surface()
+manager.draw_ui(background)
+
 pygame.display.update()
+
 while not user_exit:
   for event in pygame.event.get():
+    if event.type == pygame.QUIT:
+      sys.exit()
+
     if event.type == pygame.KEYDOWN:
-      user_exit = True
+        user_exit = True
 
 # Save game data to file
 game_data = {
