@@ -1,7 +1,5 @@
 '''Present game to user.'''
 
-import csv
-import os.path
 import sys
 import textwrap
 import time
@@ -9,8 +7,8 @@ import time
 import pygame
 import pygame_gui
 
+import Game
 import GameMode
-import Score
 
 # TODO Where to put init() code?
 pygame.init()
@@ -140,16 +138,12 @@ class ScoreBar:
     self._timer = ScoreBox(manager, "Timer", (3 * ScoreBox.BOX_SIZE, 0))
     self._total = ScoreBox(manager, "Score", (4 * ScoreBox.BOX_SIZE, 0))
 
-  def update(self, *, n_score, n_correct=None, n_incorrect=None, n_hints=None, n_timer=None):
-    self._total.set_tally(n_score)
-    if n_correct:
-      self._correct.set_tally(n_correct)
-    if n_incorrect:
-      self._incorrect.set_tally(n_incorrect)
-    if n_hints:
-      self._hints.set_tally(n_hints)
-    if n_timer:
-      self._timer.set_tally(n_timer)
+  def update(self, game):
+    self._total.set_tally(game.score())
+    self._correct.set_tally(game.n_correct())
+    self._incorrect.set_tally(game.n_incorrect())
+    self._hints.set_tally(game.n_hints())
+    self._timer.set_tally(game.time())
 
 
 class GameScreen:
@@ -168,17 +162,6 @@ class GameScreen:
     self._clock = pygame.time.Clock()
     pygame.time.set_timer(TIMER_EVENT, millis=MS_PER_SECOND) 
 
-    # TODO Move to Game
-    self._correct = Score.Correct()
-    self._incorrect = Score.Incorrect()
-    self._hints = Score.Hints()
-    self._timer = Score.Timer()
-    self._total = Score.Total.Standard(
-      correct=self._correct,
-      incorrect=self._incorrect,
-      hints=self._hints,
-      timer=self._timer,
-    )
 
   def init_screen(self):
     global screen_lines
@@ -197,8 +180,8 @@ class GameScreen:
       )
       screen_lines.append(text_box)
 
-  def update_score_bar(self, **kwargs):
-    self._score_bar.update(**kwargs)
+  def update_score_bar(self):
+    self._score_bar.update(self._game)
 
   def update_content(self, raw_text, verse=None):
     global screen_lines
@@ -239,46 +222,31 @@ class GameScreen:
       raise ValueError(f"Unsupported game mode {mode}")
 
   def handle_clock_tick(self):
-    self._timer.increment()
-    time_now = self._timer.count()
-    updated_score = self._total.value()
-    self.update_score_bar(
-      n_score=updated_score, n_timer=time_now,
-    )
+    self._game.clock_ticked()
+    self.update_score_bar()
 
   def handle_correct(self, verse, mode):
-    self._correct.increment()
-    n_correct = self._correct.count()
-    self.update_score_bar(
-      n_score=self._total.value(), n_correct=n_correct,
-    )
-
+    self._game.guess_right()
+    self.update_score_bar()
     text = mode.on_correct_guess()
     self.update_content(text, verse=verse)
 
   def handle_hint(self, verse, mode):
-    self._hints.increment()
-    n_hints = self._hints.count()
-    self._update_score_bar(
-      n_score=self._total.value(), n_hints=n_hints,
-    )
-
+    self._game.request_hint()
+    self.update_score_bar()
     text = mode.on_hint()
     self.update_content(text, verse=verse)
 
   def handle_incorrect(self, verse, mode):
-    self._incorrect.increment()
-    n_incorrect = self._incorrect.count()
-    self.update_score_bar(
-      n_score=self._total.value(), n_incorrect=n_incorrect,
-    )
-
+    self._game.guess_wrong()
+    self.update_score_bar()
     text = mode.on_incorrect_guess()
     self.update_content(text, verse=verse)
 
   def run(self, verses, mode_code):
+    # FIXME Initialize member in __init__
+    self._game = Game.Game(mode_code)
     mode_type = self.game_mode(mode_code)
-    start_time = time.strftime("%Y-%m-%d %H:%M:%S")
     for verse in verses:
       # FIXME Don't check GAME_MODE in function and `if`
       if mode_code == 1:
@@ -330,24 +298,4 @@ class GameScreen:
           if event.type == pygame.KEYDOWN:
               user_exit = True
 
-      # Save game data to file
-      game_data = {
-        'Time_Start': start_time,
-        'Score': self._total.value(),
-        'Correct': self._correct.count(), 
-        'Incorrect': self._incorrect.count(), 
-        'Hints': self._hints.count(), 
-        'Time': self._timer.count(),
-        'Game_Mode': mode_code,
-      }
-      out_file = 'rsc/scores.csv'
-      if not os.path.exists(out_file):
-        write_header = True
-      else:
-        write_header = False
-      with open(out_file, 'a', newline='') as csvfile:
-        writer = csv.DictWriter(csvfile, delimiter=',', fieldnames=game_data.keys())
-        if write_header:
-          writer.writeheader()
-        writer.writerow(game_data) 
-
+      self._game.save_to_file()
