@@ -8,13 +8,10 @@ import Display
 import Parser
 import Reader
 
-GAME_MODE = 4
-
-screen = Display.GameScreen()
 
 directory = 'rsc/books'
 #book = 'John'
-book = '3_John'
+book = '3_John copy'
 #book = 'Philemon' 
 filename = book + '.txt'
 path = os.path.join(directory, filename)
@@ -23,5 +20,5 @@ lines = reader.lines()
 parser = Parser.Simple(lines)
 verses = parser.parse()
 
-screen.init_screen()
-screen.run(verses, GAME_MODE)
+screen = Display.GameScreen()
+screen.run(verses)

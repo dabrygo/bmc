@@ -13,13 +13,11 @@ import GameMode
 # TODO Where to put init() code?
 pygame.init()
 
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-
 DEFAULT_WIDTH = 800
 DEFAULT_HEIGHT = 400
 
-N_SCREEN_LINES = 8
+N_CONTENT_LINES = 8
+CONTENT_WIDTH = 600
 
 TIMER_EVENT = pygame.USEREVENT + 1 # Define a unique custom event ID
 MS_PER_SECOND = 1000
@@ -29,6 +27,7 @@ HINT_KEY = pygame.K_SLASH
 delay = 0.25  # seconds to wait before changing a screen
 
 # FIXME Belongs in Game Rules
+GAME_MODE = 1
 MODE_1_GUESSES = 3
 
 # Derived properties
@@ -42,9 +41,6 @@ MODE_1_GUESSES = 3
 max_chars = 60
 wrapper = textwrap.TextWrapper(max_chars)
 
-screen_lines = []
-
-text_color = WHITE
 font_size = 24
 font_face = 'Consolas'
 font_path = "c:/windows/fonts/consolas.ttf"
@@ -52,30 +48,6 @@ font = pygame.font.SysFont(font_face, size=font_size)
 
 def htmlify(text):
   return f'<font face="consolas">' + text + '</span>'
-
-
-class Screen:
-  def __init__(self, screen, color):
-    self._screen = screen
-    self._color = color
-
-  @classmethod
-  def size_and_color(cls, width, height, color):
-    size = (width, height)
-    screen = pygame.display.set_mode(size)
-    return cls(screen, color)
- 
-  def blit(self, items):
-    rgb = self._color.rgb()
-    self._screen.fill(rgb)
-    for item in items:
-      surface = item.surface()
-      rectangle = item.rectangle()
-      self._screen.blit(surface, rectangle)
-    pygame.display.update()
-
-  def surface(self):
-    return self._screen
 
 
 class ContentBox:
@@ -98,94 +70,92 @@ class ContentBox:
 class ScoreBox:
     BOX_SIZE = 100
 
-    def __init__(self, manager, label, position):
-        self._label = label
-        self._tally = 0
-        self._position = position
-        self._gui_element = pygame_gui.elements.UITextBox(
-            html_text=self._text(),
-            relative_rect=pygame.Rect(
-                self._position,
-                (ScoreBox.BOX_SIZE, ScoreBox.BOX_SIZE)
-            ),
-            manager=manager,
-            object_id=pygame_gui.core.ObjectID(
-                class_id='@score_box',
-                object_id=f'#score_box_{self._label.lower()}'
-            )
+    def __init__(self, manager, label, position, tally):
+      self._label = label
+      self._tally = tally
+      self._position = position
+      self._gui_element = pygame_gui.elements.UITextBox(
+        html_text=self._text(),
+        relative_rect=pygame.Rect(
+            self._position,
+            (ScoreBox.BOX_SIZE, ScoreBox.BOX_SIZE)
+        ),
+        manager=manager,
+        object_id=pygame_gui.core.ObjectID(
+            class_id='@score_box',
+            object_id=f'#score_box_{self._label.lower()}'
         )
+      )
 
     def _text(self):
-        return htmlify(f"{self._label.title()}\n{self._tally:05d}")
+      label = self._label.title()
+      count = self._tally.value()
+      return htmlify(f"{label}\n{count:05d}")
 
-    def increment(self):
-      self.set_tally(self._tally + 1)
-
-    def set_tally(self, tally):
-      self._tally = tally
+    def update(self):
       text = self._text()
       self._gui_element.set_text(text)
 
-    def tally(self):
-      return self._tally
-
 
 class ScoreBar:
-  def __init__(self, manager):
-    self._correct = ScoreBox(manager, "Correct", (0 * ScoreBox.BOX_SIZE, 0))
-    self._incorrect = ScoreBox(manager, "Incorrect", (1 * ScoreBox.BOX_SIZE, 0))
-    self._hints = ScoreBox(manager, "Hints", (2 * ScoreBox.BOX_SIZE, 0))
-    self._timer = ScoreBox(manager, "Timer", (3 * ScoreBox.BOX_SIZE, 0))
-    self._total = ScoreBox(manager, "Score", (4 * ScoreBox.BOX_SIZE, 0))
+  def __init__(self, manager, game):
+    self._correct = ScoreBox(manager, "Correct", (0 * ScoreBox.BOX_SIZE, 0), game.correct())
+    self._incorrect = ScoreBox(manager, "Incorrect", (1 * ScoreBox.BOX_SIZE, 0), game.incorrect())
+    self._hints = ScoreBox(manager, "Hints", (2 * ScoreBox.BOX_SIZE, 0), game.hints())
+    self._timer = ScoreBox(manager, "Timer", (3 * ScoreBox.BOX_SIZE, 0), game.timer())
+    self._total = ScoreBox(manager, "Score", (4 * ScoreBox.BOX_SIZE, 0), game.total())
+    if GAME_MODE == 1:
+      self._guesses = ScoreBox(manager, "Guesses", (5 * ScoreBox.BOX_SIZE, 0), game.guesses())
 
-  def update(self, game):
-    self._total.set_tally(game.score())
-    self._correct.set_tally(game.n_correct())
-    self._incorrect.set_tally(game.n_incorrect())
-    self._hints.set_tally(game.n_hints())
-    self._timer.set_tally(game.time())
+  def update(self):
+    self._total.update()
+    self._correct.update()
+    self._incorrect.update()
+    self._hints.update()
+    self._timer.update()
+    if GAME_MODE == 1:
+      self._guesses.update()
 
 
 class GameScreen:
-  def __init__(self, width=800, height=400, background=BLACK):
-    self._screen = Screen.size_and_color(
-      width=width, height=height, color=background
-    )
+  def __init__(self, width=800, height=400):
+    self._screen = pygame.display.set_mode((width, height))
+
     self._manager = pygame_gui.UIManager(
         (width, height), 
         theme_path="rsc/bmc_default_theme.json",
     )
     self._manager.add_font_paths(font_face, font_path)
-    self._score_bar = ScoreBar(self._manager)
+
+    self._game = Game.Game(GAME_MODE, MODE_1_GUESSES)
+
+    self._score_bar = ScoreBar(self._manager, self._game)
+
+    self._content_text_boxes = [None for i in range(N_CONTENT_LINES)]
+    self._draw_content_boxes()
 
     # Set the timer to trigger every second 
     self._clock = pygame.time.Clock()
     pygame.time.set_timer(TIMER_EVENT, millis=MS_PER_SECOND) 
 
-
-  def init_screen(self):
-    global screen_lines
-
-    screen_lines = []
+  def _draw_content_boxes(self):
     box_height = font_size + 10
-    for i in range(N_SCREEN_LINES):
+    for i in range(N_CONTENT_LINES):
       x = 0 
       y = ScoreBox.BOX_SIZE + i * box_height 
       text_box = ContentBox(
         manager=self._manager, 
         label=f"verse_{i}",
         position=(x, y), 
-        size=(600, box_height), 
+        size=(CONTENT_WIDTH, box_height), 
         text=""
       )
-      screen_lines.append(text_box)
+      self._content_text_boxes[i] = text_box
 
   def update_score_bar(self):
-    self._score_bar.update(self._game)
+    self._score_bar.update()
 
   def update_content(self, raw_text, verse=None):
-    global screen_lines
-
     # Wrap text to fit on screen
     wrapped = wrapper.wrap(raw_text)
     if verse:
@@ -193,10 +163,10 @@ class GameScreen:
       wrapped.insert(0, section)
       reference = verse.reference()
       wrapped.insert(1, reference)
-    assert len(wrapped) <= N_SCREEN_LINES
+    assert len(wrapped) <= N_CONTENT_LINES
 
-    for i in range(N_SCREEN_LINES):
-      text_box = screen_lines[i]
+    for i in range(N_CONTENT_LINES):
+      text_box = self._content_text_boxes[i]
       if i < len(wrapped):
         line = wrapped[i]
       else:
@@ -206,9 +176,7 @@ class GameScreen:
   def refresh_screen(self):
     time_delta = self._clock.tick(60) / MS_PER_SECOND
     self._manager.update(time_delta)
-    background = self._screen.surface()
-    self._manager.draw_ui(background)
-
+    self._manager.draw_ui(self._screen)
     pygame.display.update()
 
   def game_mode(self, mode):
@@ -243,15 +211,13 @@ class GameScreen:
     text = mode.on_incorrect_guess()
     self.update_content(text, verse=verse)
 
-  def run(self, verses, mode_code):
-    # FIXME Initialize member in __init__
-    self._game = Game.Game(mode_code)
-    mode_type = self.game_mode(mode_code)
+  def run(self, verses):
+    mode_type = self.game_mode(GAME_MODE)
     for verse in verses:
       # FIXME Don't check GAME_MODE in function and `if`
-      if mode_code == 1:
+      if GAME_MODE == 1:
         mode = mode_type(verse, n_guesses=MODE_1_GUESSES)
-      elif mode_code == 4:
+      elif GAME_MODE == 4:
         mode = mode_type(verse)
 
       content = mode.content()
@@ -286,16 +252,16 @@ class GameScreen:
 
       time.sleep(delay)
 
-      text = 'Press any key to exit'
-      self.update_content(text)
-      self.refresh_screen()
-      user_exit = False
-      while not user_exit:
-        for event in pygame.event.get():
-          if event.type == pygame.QUIT:
-            sys.exit()
+    text = 'Press any key to exit'
+    self.update_content(text)
+    self.refresh_screen()
+    user_exit = False
+    while not user_exit:
+      for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+          sys.exit()
 
-          if event.type == pygame.KEYDOWN:
-              user_exit = True
+        if event.type == pygame.KEYDOWN:
+            user_exit = True
 
-      self._game.save_to_file()
+    self._game.save_to_file()

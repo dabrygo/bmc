@@ -5,15 +5,24 @@ class Tally:
   '''Keeps track of how many times something happens.'''
 
   def __init__(self, count_start=0):
-    self._count = count_start
+    self._count_start = count_start
+    self._count = self._count_start
 
   def increment(self):
     '''Adds to the tally.'''
     self._count += 1
 
-  def count(self):
+  def decrement(self):
+    '''Subtracts from the tally.'''
+    self._count -= 1
+
+  def value(self):
     '''Returns the tally.'''
     return self._count
+
+  def reset(self):
+    '''Resets the tally.'''
+    self._count = self._count_start
 
 
 class Correct(Tally):
@@ -28,6 +37,13 @@ class Incorrect(Tally):
 
   def __init__(self):
     super().__init__()
+
+
+class Guesses(Tally):
+  '''Keeps track of how many guesses a user may make.'''
+
+  def __init__(self, count_start=0):
+    super().__init__(count_start=count_start)
 
 
 class Hints(Tally):
@@ -52,7 +68,7 @@ class Score:
     self._multiplier = multiplier
 
   def value(self):
-    return self._tally.count() * self._multiplier
+    return self._tally.value() * self._multiplier
 
 
 class Total:
