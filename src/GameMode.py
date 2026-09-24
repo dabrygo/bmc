@@ -73,7 +73,7 @@ class GameMode:
 
 
 class RandomWord(GameMode):
-  '''User guesses randomly selected words one at a time.'''
+  '''User guesses one randomly selected word at a time.'''
   def __init__(self, verse, n_guesses=5):
     self._verse = verse
     self._i_guess = 0
