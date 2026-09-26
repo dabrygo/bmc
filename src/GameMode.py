@@ -74,10 +74,11 @@ class GameMode:
 
 class RandomWord(GameMode):
   '''User guesses one randomly selected word at a time.'''
-  def __init__(self, verse, n_guesses=5):
+  def __init__(self, verse, attempts, n_words):
     self._verse = verse
-    self._i_guess = 0
-    self._n_guesses = n_guesses
+    self._attempts = attempts
+    self._n_words = n_words # How many words user must reveal
+    self._i_words = 0 # How many words user has revealed
     text = self._verse.text()
     tokens = Tokens.NoBlanking(text)
     self._tokenized = tokens.tokenize()
@@ -106,11 +107,11 @@ class RandomWord(GameMode):
     lines = self._sample.text()
     return lines
 
-  def _more_guesses_remaining(self):
-    return self._i_guess < self._n_guesses
+  def _can_keep_trying(self):
+    return self._attempts.is_max_value()
 
   def must_guess_again(self):
-    return self._sample.guessable() and self._more_guesses_remaining()
+    return self._sample.guessable() # and self._more_guesses_remaining()
 
   def expected_input(self):
     return self._sample.key()
@@ -119,23 +120,27 @@ class RandomWord(GameMode):
     self._sample.hint()
     return self._sample.text()
 
+  def _must_complete_more_words(self):
+    return self._i_words < self._n_words
+
   def on_correct_guess(self):
     key = self._sample.key()
     letter = letters[key]
     self._sample.guess(letter)
-    self._i_guess += 1
-    if self._more_guesses_remaining():
-      self._hide_word()
+    self._i_words += 1
+    if self._must_complete_more_words():
+      self._hide_word() 
     return self._sample.text()
 
   def on_incorrect_guess(self):
     return self._sample.text()
- 
+
 
 class AllBlank:
   '''User guesses all words.'''
-  def __init__(self, verse):
+  def __init__(self, verse, attempts):
     self._verse = verse
+    self._attempts = attempts
     text = self._verse.text()
     tokens = Tokens.Classic(text)
     tokenized = tokens.tokenize()
@@ -162,4 +167,3 @@ class AllBlank:
 
   def on_incorrect_guess(self):
     return self._sample.text()
-     

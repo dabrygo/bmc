@@ -28,7 +28,9 @@ delay = 0.25  # seconds to wait before changing a screen
 
 # FIXME Belongs in Game Rules
 GAME_MODE = 1
-MODE_1_GUESSES = 3
+MAX_ATTEMPTS = 3
+# In Mode 1 User must reveal N words to go to next screen
+N_WORDS_MODE_1 = 5 
 
 # Derived properties
 #n_cols = 120
@@ -104,8 +106,7 @@ class ScoreBar:
     self._hints = ScoreBox(manager, "Hints", (2 * ScoreBox.BOX_SIZE, 0), game.hints())
     self._timer = ScoreBox(manager, "Timer", (3 * ScoreBox.BOX_SIZE, 0), game.timer())
     self._total = ScoreBox(manager, "Score", (4 * ScoreBox.BOX_SIZE, 0), game.total())
-    if GAME_MODE == 1:
-      self._guesses = ScoreBox(manager, "Guesses", (5 * ScoreBox.BOX_SIZE, 0), game.guesses())
+    self._attempts = ScoreBox(manager, "Attempts", (5 * ScoreBox.BOX_SIZE, 0), game.attempts())
 
   def update(self):
     self._total.update()
@@ -113,8 +114,7 @@ class ScoreBar:
     self._incorrect.update()
     self._hints.update()
     self._timer.update()
-    if GAME_MODE == 1:
-      self._guesses.update()
+    self._attempts.update()
 
 
 class GameScreen:
@@ -127,7 +127,7 @@ class GameScreen:
     )
     self._manager.add_font_paths(font_face, font_path)
 
-    self._game = Game.Game(GAME_MODE, MODE_1_GUESSES)
+    self._game = Game.Game(GAME_MODE, MAX_ATTEMPTS)
 
     self._score_bar = ScoreBar(self._manager, self._game)
 
@@ -214,11 +214,12 @@ class GameScreen:
   def run(self, verses):
     mode_type = self.game_mode(GAME_MODE)
     for verse in verses:
-      # FIXME Don't check GAME_MODE in function and `if`
+      attempts = self._game.attempts()
+      # FIXME Don't check GAME MODE more than once
       if GAME_MODE == 1:
-        mode = mode_type(verse, n_guesses=MODE_1_GUESSES)
-      elif GAME_MODE == 4:
-        mode = mode_type(verse)
+        mode = mode_type(verse, attempts=attempts, n_words=N_WORDS_MODE_1)
+      else:
+        mode = mode_type(verse, attempts=attempts)
 
       content = mode.content()
       self.update_content(raw_text=content, verse=verse)

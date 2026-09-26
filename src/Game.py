@@ -7,7 +7,7 @@ import time
 import Score
 
 class Game:
-  def __init__(self, mode_code, n_guesses=0):
+  def __init__(self, mode_code, max_attempts=0):
     self._correct = Score.Correct()
     self._incorrect = Score.Incorrect()
     self._hints = Score.Hints()
@@ -20,11 +20,7 @@ class Game:
     )
     self._start_time = time.strftime("%Y-%m-%d %H:%M:%S")
     self._mode_code = mode_code
-    if mode_code == 1:
-      assert n_guesses > 0
-      self._guesses = Score.Guesses(count_start=n_guesses)
-    else:
-      self._guesses = None
+    self._attempts = Score.Attempts(count_start=0, count_max=max_attempts)
 
   def clock_ticked(self):
     self._timer.increment()
@@ -37,8 +33,7 @@ class Game:
 
   def guess_right(self):
     self._correct.increment()
-    if self._guesses:
-      self._guesses.reset()
+    self._attempts.reset()
 
   def correct(self):
     return self._correct
@@ -57,8 +52,7 @@ class Game:
 
   def guess_wrong(self):
     self._incorrect.increment()
-    if self._guesses:
-      self._guesses.decrement()
+    self._attempts.increment()
 
   def incorrect(self):
     return self._incorrect
@@ -72,14 +66,11 @@ class Game:
   def total(self):
     return self._total
 
-  def guesses(self):
-    return self._guesses
+  def attempts(self):
+    return self._attempts
 
-  def n_guesses(self):
-    if self._guesses:
-      return self._guesses.value()
-    else:
-      return None
+  def n_attempts(self):
+    return self._attempts.value()
 
   def save_to_file(self):
     game_data = {

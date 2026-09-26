@@ -4,9 +4,10 @@
 class Tally:
   '''Keeps track of how many times something happens.'''
 
-  def __init__(self, count_start=0):
+  def __init__(self, count_start=0, count_max=None):
     self._count_start = count_start
     self._count = self._count_start
+    self._count_max = count_max
 
   def increment(self):
     '''Adds to the tally.'''
@@ -24,6 +25,12 @@ class Tally:
     '''Resets the tally.'''
     self._count = self._count_start
 
+  def is_max_value(self):
+    if not self._count_max:
+      return False
+    else:
+      return self._count == self._count_max
+
 
 class Correct(Tally):
   '''Keeps track of how many times user enters correct inputs.'''
@@ -32,18 +39,20 @@ class Correct(Tally):
     super().__init__()
 
 
+class Attempts(Tally):
+  '''Keeps track of how many times a user can try to get the right answer.'''
+
+  def __init__(self, count_start=0, count_max=None):
+    super().__init__(
+      count_start=count_start, count_max=count_max
+  )
+
+
 class Incorrect(Tally):
   '''Keeps track of how many times user enters incorrect inputs.'''
 
   def __init__(self):
     super().__init__()
-
-
-class Guesses(Tally):
-  '''Keeps track of how many guesses a user may make.'''
-
-  def __init__(self, count_start=0):
-    super().__init__(count_start=count_start)
 
 
 class Hints(Tally):
