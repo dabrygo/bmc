@@ -6,7 +6,7 @@ import time
 
 import Score
 
-class Game:
+class Session:
   def __init__(self, mode_code, max_attempts=0):
     self._correct = Score.Correct()
     self._incorrect = Score.Incorrect()

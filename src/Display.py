@@ -7,7 +7,7 @@ import time
 import pygame
 import pygame_gui
 
-import Game
+import GameData
 import GameMode
 
 # TODO Where to put init() code?
@@ -127,7 +127,7 @@ class GameScreen:
     )
     self._manager.add_font_paths(font_face, font_path)
 
-    self._game = Game.Game(GAME_MODE, MAX_ATTEMPTS)
+    self._game = GameData.Session(GAME_MODE, MAX_ATTEMPTS)
 
     self._score_bar = ScoreBar(self._manager, self._game)
 
