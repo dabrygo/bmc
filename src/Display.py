@@ -1,14 +1,10 @@
 '''Present game to user.'''
 
-import sys
 import textwrap
-import time
 
 import pygame
 import pygame_gui
 
-import GameData
-import GameMode
 
 # TODO Where to put init() code?
 pygame.init()
@@ -22,15 +18,6 @@ CONTENT_WIDTH = 600
 TIMER_EVENT = pygame.USEREVENT + 1 # Define a unique custom event ID
 MS_PER_SECOND = 1000
 
-# FIXME Belongs in Settings Maker
-HINT_KEY = pygame.K_SLASH
-delay = 0.25  # seconds to wait before changing a screen
-
-# FIXME Belongs in Game Rules
-GAME_MODE = 1
-MAX_ATTEMPTS = 3
-# In Mode 1 User must reveal N words to go to next screen
-N_WORDS_MODE_1 = 5 
 
 # Derived properties
 #n_cols = 120
@@ -118,7 +105,7 @@ class ScoreBar:
 
 
 class GameScreen:
-  def __init__(self, width=800, height=400):
+  def __init__(self, game_data, width=800, height=400):
     self._screen = pygame.display.set_mode((width, height))
 
     self._manager = pygame_gui.UIManager(
@@ -127,9 +114,7 @@ class GameScreen:
     )
     self._manager.add_font_paths(font_face, font_path)
 
-    self._game = GameData.Session(GAME_MODE, MAX_ATTEMPTS)
-
-    self._score_bar = ScoreBar(self._manager, self._game)
+    self._score_bar = ScoreBar(self._manager, game_data)
 
     self._content_text_boxes = [None for i in range(N_CONTENT_LINES)]
     self._draw_content_boxes()
@@ -173,96 +158,16 @@ class GameScreen:
         line = ""
       text_box.set_text(line)
 
+  def process_events(self, event):
+    self._manager.process_events(event)
+
   def refresh_screen(self):
     time_delta = self._clock.tick(60) / MS_PER_SECOND
     self._manager.update(time_delta)
     self._manager.draw_ui(self._screen)
     pygame.display.update()
 
-  def game_mode(self, mode):
-    if mode == 1:
-      return GameMode.RandomWord
-    elif mode == 4:
-      return GameMode.AllBlank
-    elif mode in [2, 3]:
-      raise NotImplemented(f"Game mode {mode} not implemented")
-    else:
-      raise ValueError(f"Unsupported game mode {mode}")
-
-  def handle_clock_tick(self):
-    self._game.clock_ticked()
-    self.update_score_bar()
-
-  def handle_correct(self, verse, mode):
-    self._game.guess_right()
-    self.update_score_bar()
-    text = mode.on_correct_guess()
-    self.update_content(text, verse=verse)
-
-  def handle_hint(self, verse, mode):
-    self._game.request_hint()
-    self.update_score_bar()
-    text = mode.on_hint()
-    self.update_content(text, verse=verse)
-
-  def handle_incorrect(self, verse, mode):
-    self._game.guess_wrong()
-    self.update_score_bar()
-    text = mode.on_incorrect_guess()
-    self.update_content(text, verse=verse)
-
-  def run(self, verses):
-    mode_type = self.game_mode(GAME_MODE)
-    for verse in verses:
-      attempts = self._game.attempts()
-      # FIXME Don't check GAME MODE more than once
-      if GAME_MODE == 1:
-        mode = mode_type(verse, attempts=attempts, n_words=N_WORDS_MODE_1)
-      else:
-        mode = mode_type(verse, attempts=attempts)
-
-      content = mode.content()
-      self.update_content(raw_text=content, verse=verse)
-      
-      while mode.must_guess_again():
-        for event in pygame.event.get():
-          if event.type == pygame.QUIT:
-            sys.exit()
-
-          if event.type == TIMER_EVENT:
-            self.handle_clock_tick()
-
-          if event.type == pygame.KEYDOWN:
-            pressed_keys = pygame.key.get_pressed()
-
-            expected_input = mode.expected_input()
-            is_correct = pressed_keys[expected_input]
-
-            is_hint = pressed_keys[HINT_KEY]
-
-            if is_correct:
-              self.handle_correct(verse, mode)
-            elif is_hint:
-              self.handle_hint(verse, mode)
-            else: # is_incorrect
-              self.handle_incorrect(verse, mode)
-
-            self._manager.process_events(event)
-
-        self.refresh_screen()
-
-      time.sleep(delay)
-
+  def display_end_screen(self):
     text = 'Press any key to exit'
     self.update_content(text)
     self.refresh_screen()
-    user_exit = False
-    while not user_exit:
-      for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-          sys.exit()
-
-        if event.type == pygame.KEYDOWN:
-            user_exit = True
-
-    self._game.save_to_file()
