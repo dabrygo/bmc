@@ -18,14 +18,14 @@ N_WORDS_MODE_1 = 5
 
 
 class Game:
-  def __init__(self, verses, mode, game_data, game_view):
+  def __init__(self, model, view, verses, mode):
+    self._model = model
+    self._view = view
     self._verses = verses
     self._mode = mode
-    self._game_data = game_data
-    self._game_view = game_view
 
   def _game_mode(self, mode, verse):
-    attempts = self._game_data.attempts()
+    attempts = self._model.attempts()
     if mode == 1:
       return GameMode.RandomWord(verse, attempts=attempts, n_words=N_WORDS_MODE_1)
     elif mode == 4:
@@ -36,26 +36,26 @@ class Game:
       raise ValueError(f"Unsupported game mode {mode}")
 
   def handle_clock_tick(self):
-    self._game_data.clock_ticked()
-    self._game_view.update_score_bar()
+    self._model.clock_ticked()
+    self._view.update_score_bar()
 
   def handle_correct(self, verse, mode):
-    self._game_data.guess_right()
-    self._game_view.update_score_bar()
+    self._model.guess_right()
+    self._view.update_score_bar()
     text = mode.on_correct_guess()
-    self._game_view.update_content(text, verse=verse)
+    self._view.update_content(text, verse=verse)
 
   def handle_hint(self, verse, mode):
-    self._game_data.request_hint()
-    self._game_view.update_score_bar()
+    self._model.request_hint()
+    self._view.update_score_bar()
     text = mode.on_hint()
-    self._game_view.update_content(text, verse=verse)
+    self._view.update_content(text, verse=verse)
 
   def handle_incorrect(self, verse, mode):
-    self._game_data.guess_wrong()
-    self._game_view.update_score_bar()
+    self._model.guess_wrong()
+    self._view.update_score_bar()
     text = mode.on_incorrect_guess()
-    self._game_view.update_content(text, verse=verse)
+    self._view.update_content(text, verse=verse)
 
   def handle_exit_end_screen(self):
     user_exit = False
@@ -67,11 +67,11 @@ class Game:
         if event.type == pygame.KEYDOWN:
             user_exit = True
 
-  def play(self, mode_code):
+  def play(self):
     for verse in self._verses:
-      mode = self._game_mode(mode_code, verse)
+      mode = self._game_mode(self._mode, verse)
       content = mode.content()
-      self._game_view.update_content(
+      self._view.update_content(
         raw_text=content, verse=verse
       )
       
@@ -98,13 +98,13 @@ class Game:
             else: # is_incorrect
               self.handle_incorrect(verse, mode)
 
-            self._game_view.process_events(event)
+            self._view.process_events(event)
 
-        self._game_view.refresh_screen()
+        self._view.refresh_screen()
 
       time.sleep(delay)
 
-    self._game_data.save_to_file()
-    self._game_view.display_end_screen()
+    self._model.save_to_file()
+    self._view.display_end_screen()
     self.handle_exit_end_screen()
 
