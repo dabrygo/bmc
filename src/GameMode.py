@@ -40,6 +40,13 @@ letters = {
 
 
 class GameMode:
+  def play(self):
+    while self.game_still_going():
+      pass
+
+  def game_still_going(self):
+    return self.must_guess_again()
+
   '''A supplier of lines of text'''
   @abc.abstractmethod
   def content(self):
@@ -130,6 +137,68 @@ class RandomWord(GameMode):
     self._i_words += 1
     if self._must_complete_more_words():
       self._hide_word() 
+    return self._sample.text()
+
+  def on_incorrect_guess(self):
+    return self._sample.text()
+
+
+class RandomWords(GameMode):
+  '''User iteratively guesses multiple randomly blanked words.'''
+  def __init__(self, verse, attempts, n_words):
+    self._verse = verse
+    self._attempts = attempts
+    self._n_words = n_words # How many words user must reveal
+    self._i_words = 0 # How many words user has revealed
+    text = self._verse.text()
+    tokens = Tokens.NoBlanking(text)
+    self._tokenized = tokens.tokenize()
+ 
+  def _random_indices(self, tokens):
+    non_ignore_indices = []
+    for i, token in enumerate(tokens):
+      if not isinstance(token, Word.Ignore):
+        non_ignore_indices.append(i)
+    return random.sample(non_ignore_indices, k=self._n_words)
+
+  def _hide_word(self):
+    i_hide = self._random_indices(self._tokenized)
+    new_tokens = []
+    for i, token in enumerate(self._tokenized):
+      if i in i_hide:
+        token = Word.Classic(token.show())
+        new_tokens.append(token)
+      else:
+        token.show()
+        new_tokens.append(token)
+    self._sample = Sample.Classic(new_tokens)
+ 
+  def content(self):
+    self._hide_word()
+    lines = self._sample.text()
+    return lines
+
+  def _can_keep_trying(self):
+    return self._attempts.is_max_value()
+
+  def must_guess_again(self):
+    return self._sample.guessable() # and self._more_guesses_remaining()
+
+  def expected_input(self):
+    return self._sample.key()
+
+  def on_hint(self):
+    self._sample.hint()
+    return self._sample.text()
+
+  def _must_complete_more_words(self):
+    return self._i_words < self._n_words
+
+  def on_correct_guess(self):
+    key = self._sample.key()
+    letter = letters[key]
+    self._sample.guess(letter)
+    self._i_words += 1
     return self._sample.text()
 
   def on_incorrect_guess(self):

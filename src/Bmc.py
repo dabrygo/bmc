@@ -8,7 +8,7 @@ import GameData
 import Material
 
 # FIXME Belongs in Game Rules
-GAME_MODE = 1
+GAME_MODE = 3
 MAX_ATTEMPTS = 3
 
 #book = 'John'

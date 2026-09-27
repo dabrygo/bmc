@@ -13,8 +13,8 @@ import GameMode
 HINT_KEY = pygame.K_SLASH
 delay = 0.25  # seconds to wait before changing a screen
 
-# In Mode 1 User must reveal N words to go to next screen
-N_WORDS_MODE_1 = 5 
+# In Modes 1 & 3 user must reveal N words to go to next screen
+N_WORDS_PER_SCREEN = 5 
 
 
 class Game:
@@ -27,7 +27,9 @@ class Game:
   def _game_mode(self, mode, verse):
     attempts = self._model.attempts()
     if mode == 1:
-      return GameMode.RandomWord(verse, attempts=attempts, n_words=N_WORDS_MODE_1)
+      return GameMode.RandomWord(verse, attempts=attempts, n_words=N_WORDS_PER_SCREEN)
+    elif mode == 3:
+      return GameMode.RandomWords(verse, attempts=attempts, n_words=N_WORDS_PER_SCREEN)
     elif mode == 4:
       return GameMode.AllBlank(verse, attempts=attempts)
     elif mode in [2, 3]:
@@ -57,6 +59,21 @@ class Game:
     text = mode.on_incorrect_guess()
     self._view.update_content(text, verse=verse)
 
+  def handle_user_input(self, verse, mode):
+    pressed_keys = pygame.key.get_pressed()
+
+    expected_input = mode.expected_input()
+    is_correct = pressed_keys[expected_input]
+
+    is_hint = pressed_keys[HINT_KEY]
+
+    if is_correct:
+      self.handle_correct(verse, mode)
+    elif is_hint:
+      self.handle_hint(verse, mode)
+    else: # is_incorrect
+      self.handle_incorrect(verse, mode)
+
   def handle_exit_end_screen(self):
     user_exit = False
     while not user_exit:
@@ -84,21 +101,9 @@ class Game:
             self.handle_clock_tick()
 
           if event.type == pygame.KEYDOWN:
-            pressed_keys = pygame.key.get_pressed()
+            self.handle_user_input(verse, mode)
 
-            expected_input = mode.expected_input()
-            is_correct = pressed_keys[expected_input]
-
-            is_hint = pressed_keys[HINT_KEY]
-
-            if is_correct:
-              self.handle_correct(verse, mode)
-            elif is_hint:
-              self.handle_hint(verse, mode)
-            else: # is_incorrect
-              self.handle_incorrect(verse, mode)
-
-            self._view.process_events(event)
+          self._view.process_events(event)
 
         self._view.refresh_screen()
 
