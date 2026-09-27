@@ -88,20 +88,20 @@ class ScoreBox:
 
 class ScoreBar:
   def __init__(self, manager, game):
-    self._correct = ScoreBox(manager, "Correct", (0 * ScoreBox.BOX_SIZE, 0), game.correct())
-    self._incorrect = ScoreBox(manager, "Incorrect", (1 * ScoreBox.BOX_SIZE, 0), game.incorrect())
-    self._hints = ScoreBox(manager, "Hints", (2 * ScoreBox.BOX_SIZE, 0), game.hints())
-    self._timer = ScoreBox(manager, "Timer", (3 * ScoreBox.BOX_SIZE, 0), game.timer())
-    self._total = ScoreBox(manager, "Score", (4 * ScoreBox.BOX_SIZE, 0), game.total())
-    self._attempts = ScoreBox(manager, "Attempts", (5 * ScoreBox.BOX_SIZE, 0), game.attempts())
+    self._attempts = ScoreBox(manager, "Attempts", (0 * ScoreBox.BOX_SIZE, 0), game.attempts())
+    self._correct = ScoreBox(manager, "Correct", (1 * ScoreBox.BOX_SIZE, 0), game.correct())
+    self._incorrect = ScoreBox(manager, "Incorrect", (2 * ScoreBox.BOX_SIZE, 0), game.incorrect())
+    self._hints = ScoreBox(manager, "Hints", (3 * ScoreBox.BOX_SIZE, 0), game.hints())
+    self._timer = ScoreBox(manager, "Timer", (4 * ScoreBox.BOX_SIZE, 0), game.timer())
+    self._total = ScoreBox(manager, "Score", (5 * ScoreBox.BOX_SIZE, 0), game.total())
 
   def update(self):
-    self._total.update()
+    self._attempts.update()
     self._correct.update()
     self._incorrect.update()
     self._hints.update()
     self._timer.update()
-    self._attempts.update()
+    self._total.update()
 
 
 class GameScreen:
