@@ -9,6 +9,17 @@ import Display
 import GameMode
 
 
+# Basic Game Logic:
+# User guesses right
+#   If no more words, change screen
+# User requests hint
+#   If reveals word, count as a wrong or a hint?
+# User guesses wrong
+#   If user has more attempts, stay on current word
+#   Count as a wrong or as an attempt?
+#     If count as wrong, multiply by number of bad attempts?
+#   If user has no more attempts, move to next word
+
 # FIXME Belongs in Settings Maker
 HINT_KEY = pygame.K_SLASH
 delay = 0.25  # seconds to wait before changing a screen
@@ -25,17 +36,27 @@ class Game:
     self._mode = mode
 
   def _game_mode(self, mode, verse):
-    attempts = self._model.attempts()
     if mode == 1:
-      return GameMode.RandomWord(verse, attempts=attempts, n_words=N_WORDS_PER_SCREEN)
+      return GameMode.RandomWord(
+        verse, n_words=N_WORDS_PER_SCREEN
+      )
     elif mode == 3:
-      return GameMode.RandomWords(verse, attempts=attempts, n_words=N_WORDS_PER_SCREEN)
+      return GameMode.RandomWords(
+        verse, n_words=N_WORDS_PER_SCREEN
+      )
     elif mode == 4:
-      return GameMode.AllBlank(verse, attempts=attempts)
+      return GameMode.AllBlank(verse)
     elif mode in [2, 3]:
-      raise NotImplemented(f"Game mode {mode} not implemented")
+      raise NotImplementedError(f"Game mode {mode} not implemented")
     else:
       raise ValueError(f"Unsupported game mode {mode}")
+
+  def handle_new_screen(self, verse, mode):
+    mode.prepare_screen_for_play()
+    content = mode.content()
+    self._view.update_content(
+      raw_text=content, verse=verse
+    )
 
   def handle_clock_tick(self):
     self._model.clock_ticked()
@@ -87,12 +108,9 @@ class Game:
   def play(self):
     for verse in self._verses:
       mode = self._game_mode(self._mode, verse)
-      content = mode.content()
-      self._view.update_content(
-        raw_text=content, verse=verse
-      )
-      
-      while mode.must_guess_again():
+
+      self.handle_new_screen(verse, mode)
+      while mode.on_same_screen():
         for event in pygame.event.get():
           if event.type == pygame.QUIT:
             sys.exit()

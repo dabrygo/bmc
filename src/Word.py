@@ -121,6 +121,7 @@ class Raw(Word):
     return self._text
   
   def hide(self):
+    self._index = len(self._text)
     return self._character * len(self._text)
 
   def status(self):
@@ -175,6 +176,7 @@ class Classic(Word):
     return self._text
   
   def hide(self):
+    self._index = len(self._text)
     return self._character * len(self._text)
 
   def status(self):

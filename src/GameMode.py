@@ -40,199 +40,126 @@ letters = {
 
 
 class GameMode:
-  def play(self):
-    while self.game_still_going():
-      pass
+  def __init__(self, verse):
+    self._verse = verse
+    text = self._verse.text()
+    self._tokens = Tokens.NoBlanking(text)
+    self._tokenized = self._tokens.tokenize()
+    self._sample = Sample.Classic(self._tokenized)
 
-  def game_still_going(self):
+  def on_same_screen(self):
+    '''Returns `false` when time to change to next screen.'''
     return self.must_guess_again()
 
-  '''A supplier of lines of text'''
-  @abc.abstractmethod
   def content(self):
     '''What to print to screen.'''
-    pass
+    return self._sample.text()
 
-  @abc.abstractmethod
   def must_guess_again(self):
     '''Returns `true` if user should guess again.'''
-    pass
+    return self._sample.guessable()
 
-  @abc.abstractmethod
   def expected_input(self):
     '''What user should guess to proceed.''' 
-    pass
+    return self._sample.key()
 
-  @abc.abstractmethod
-  def on_hint(self):
-    '''What happens when user requests a hint.'''
-    pass
-
-  @abc.abstractmethod
-  def on_correct_guess(self):
-    '''What happens when user guesses correctly.'''
-    pass
-
-  @abc.abstractmethod
-  def on_incorrect_guess(self):
-    '''What happens when user guesses incorrectly.'''
-    pass
-
-
-class RandomWord(GameMode):
-  '''User guesses one randomly selected word at a time.'''
-  def __init__(self, verse, attempts, n_words):
-    self._verse = verse
-    self._attempts = attempts
-    self._n_words = n_words # How many words user must reveal
-    self._i_words = 0 # How many words user has revealed
-    text = self._verse.text()
-    tokens = Tokens.NoBlanking(text)
-    self._tokenized = tokens.tokenize()
- 
-  def _random_index(self, tokens):
+  def _random_indices(self, tokens, k):
+    '''Choose random indices of guessable tokens.'''
     non_ignore_indices = []
     for i, token in enumerate(tokens):
       if not isinstance(token, Word.Ignore):
         non_ignore_indices.append(i)
-    return random.choice(non_ignore_indices)
+    return random.sample(non_ignore_indices, k=k)
 
-  def _hide_word(self):
-    i_hide = self._random_index(self._tokenized)
+  def _hide_words_at_indices(self, indices):
+    '''Blank the tokens at the given indices.'''
     new_tokens = []
     for i, token in enumerate(self._tokenized):
-      if i == i_hide:
-        token = Word.Classic(token.show())
+      if i in indices:
+        token.hide()
         new_tokens.append(token)
       else:
         token.show()
         new_tokens.append(token)
-    self._sample = Sample.Classic(new_tokens)
- 
-  def content(self):
-    self._hide_word()
-    lines = self._sample.text()
-    return lines
+    self._tokenized = new_tokens
+    self._sample = Sample.Classic(self._tokenized)
 
-  def _can_keep_trying(self):
-    return self._attempts.is_max_value()
-
-  def must_guess_again(self):
-    return self._sample.guessable() # and self._more_guesses_remaining()
-
-  def expected_input(self):
-    return self._sample.key()
+  @abc.abstractmethod
+  def prepare_screen_for_play(self):
+    '''What screen looks like on startup, blank-wise.'''
+    pass
 
   def on_hint(self):
+    '''What happens when user requests a hint.'''
     self._sample.hint()
     return self._sample.text()
 
-  def _must_complete_more_words(self):
+  def on_incorrect_guess(self):
+    '''What happens when user guesses incorrectly.'''
+    return self._sample.text()
+
+  def on_correct_guess(self):
+    '''What happens when user guesses correctly.'''
+    key = self._sample.key()
+    letter = letters[key]
+    self._sample.guess(letter)
+    text = self._sample.text()
+    return text
+
+
+class RandomWord(GameMode):
+  '''User guesses one randomly selected word at a time.'''
+  def __init__(self, verse, n_words):
+    super().__init__(verse)
+    self._n_words = n_words # How many words user must reveal
+    self._i_words = 0 # How many words user has revealed
+    self._hide_indices = super()._random_indices(
+      self._tokenized, k=self._n_words,
+    )
+
+  def prepare_screen_for_play(self):
+    self._hide_next_word()
+ 
+  def _hide_next_word(self):
+    i_hide = self._hide_indices[self._i_words]
+    super()._hide_words_at_indices([i_hide])
+
+  def _more_words_to_do(self):
     return self._i_words < self._n_words
 
   def on_correct_guess(self):
+    # FIXME Duplicating super() code here a little messy
     key = self._sample.key()
     letter = letters[key]
     self._sample.guess(letter)
     self._i_words += 1
-    if self._must_complete_more_words():
-      self._hide_word() 
-    return self._sample.text()
-
-  def on_incorrect_guess(self):
+    if self._more_words_to_do():
+      self._hide_next_word() 
     return self._sample.text()
 
 
 class RandomWords(GameMode):
   '''User iteratively guesses multiple randomly blanked words.'''
-  def __init__(self, verse, attempts, n_words):
-    self._verse = verse
-    self._attempts = attempts
+  def __init__(self, verse, n_words):
+    super().__init__(verse)
+    self._tokenized = self._tokens.tokenize()
     self._n_words = n_words # How many words user must reveal
-    self._i_words = 0 # How many words user has revealed
-    text = self._verse.text()
-    tokens = Tokens.NoBlanking(text)
-    self._tokenized = tokens.tokenize()
- 
-  def _random_indices(self, tokens):
-    non_ignore_indices = []
-    for i, token in enumerate(tokens):
-      if not isinstance(token, Word.Ignore):
-        non_ignore_indices.append(i)
-    return random.sample(non_ignore_indices, k=self._n_words)
 
-  def _hide_word(self):
-    i_hide = self._random_indices(self._tokenized)
-    new_tokens = []
-    for i, token in enumerate(self._tokenized):
-      if i in i_hide:
-        token = Word.Classic(token.show())
-        new_tokens.append(token)
-      else:
-        token.show()
-        new_tokens.append(token)
-    self._sample = Sample.Classic(new_tokens)
- 
-  def content(self):
-    self._hide_word()
-    lines = self._sample.text()
-    return lines
-
-  def _can_keep_trying(self):
-    return self._attempts.is_max_value()
-
-  def must_guess_again(self):
-    return self._sample.guessable() # and self._more_guesses_remaining()
-
-  def expected_input(self):
-    return self._sample.key()
-
-  def on_hint(self):
-    self._sample.hint()
-    return self._sample.text()
-
-  def _must_complete_more_words(self):
-    return self._i_words < self._n_words
-
-  def on_correct_guess(self):
-    key = self._sample.key()
-    letter = letters[key]
-    self._sample.guess(letter)
-    self._i_words += 1
-    return self._sample.text()
-
-  def on_incorrect_guess(self):
-    return self._sample.text()
+  def prepare_screen_for_play(self):
+    i_hide = super()._random_indices(
+      self._tokenized, k=self._n_words
+    )
+    super()._hide_words_at_indices(i_hide)
 
 
-class AllBlank:
+class AllBlank(GameMode):
   '''User guesses all words.'''
-  def __init__(self, verse, attempts):
-    self._verse = verse
-    self._attempts = attempts
-    text = self._verse.text()
-    tokens = Tokens.Classic(text)
-    tokenized = tokens.tokenize()
-    self._sample = Sample.Classic(tokenized)
- 
-  def content(self):
-    return self._sample.text()
+  def __init__(self, verse):
+    super().__init__(verse)
 
-  def must_guess_again(self):
-    return self._sample.guessable()
+  def prepare_screen_for_play(self):
+    tokens = self._tokens.tokenize()
+    for word in tokens:
+      word.hide()
+    self._sample = Sample.Classic(tokens)
 
-  def expected_input(self):
-    return self._sample.key()
-
-  def on_hint(self):
-    self._sample.hint()
-    return self._sample.text()
-
-  def on_correct_guess(self):
-    key = self._sample.key()
-    letter = letters[key]
-    self._sample.guess(letter)
-    return self._sample.text()
-
-  def on_incorrect_guess(self):
-    return self._sample.text()
