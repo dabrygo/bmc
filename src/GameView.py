@@ -13,7 +13,7 @@ DEFAULT_WIDTH = 800
 DEFAULT_HEIGHT = 400
 
 N_CONTENT_LINES = 8
-CONTENT_WIDTH = 600
+CONTENT_WIDTH = 700
 
 TIMER_EVENT = pygame.USEREVENT + 1 # Define a unique custom event ID
 MS_PER_SECOND = 1000
@@ -104,30 +104,26 @@ class ScoreBar:
     self._total.update()
 
 
-class GameScreen:
-  def __init__(self, game_data, width=800, height=400):
-    self._screen = pygame.display.set_mode((width, height))
+class Screen:
+  def __init__(self, width=800, height=400):
+    size = (width, height)
+    self._screen = pygame.display.set_mode(size)
 
     self._manager = pygame_gui.UIManager(
-        (width, height), 
+        size,
         theme_path="rsc/bmc_default_theme.json",
     )
     self._manager.add_font_paths(font_face, font_path)
-
-    self._score_bar = ScoreBar(self._manager, game_data)
-
-    self._content_text_boxes = [None for i in range(N_CONTENT_LINES)]
-    self._draw_content_boxes()
 
     # Set the timer to trigger every second 
     self._clock = pygame.time.Clock()
     pygame.time.set_timer(TIMER_EVENT, millis=MS_PER_SECOND) 
 
-  def _draw_content_boxes(self):
+  def _draw_content_boxes(self, n_boxes, x_start, y_start):
     box_height = font_size + 10
-    for i in range(N_CONTENT_LINES):
-      x = 0 
-      y = ScoreBox.BOX_SIZE + i * box_height 
+    for i in range(n_boxes):
+      x = x_start 
+      y = y_start + i * box_height 
       text_box = ContentBox(
         manager=self._manager, 
         label=f"verse_{i}",
@@ -137,27 +133,6 @@ class GameScreen:
       )
       self._content_text_boxes[i] = text_box
 
-  def update_score_bar(self):
-    self._score_bar.update()
-
-  def update_content(self, raw_text, verse=None):
-    # Wrap text to fit on screen
-    wrapped = wrapper.wrap(raw_text)
-    if verse:
-      section = verse.section()
-      wrapped.insert(0, section)
-      reference = verse.reference()
-      wrapped.insert(1, reference)
-    assert len(wrapped) <= N_CONTENT_LINES
-
-    for i in range(N_CONTENT_LINES):
-      text_box = self._content_text_boxes[i]
-      if i < len(wrapped):
-        line = wrapped[i]
-      else:
-        line = ""
-      text_box.set_text(line)
-
   def process_events(self, event):
     self._manager.process_events(event)
 
@@ -166,6 +141,80 @@ class GameScreen:
     self._manager.update(time_delta)
     self._manager.draw_ui(self._screen)
     pygame.display.update()
+
+  def update_content(self, raw_text, n_boxes=N_CONTENT_LINES, verse=None):
+    # Wrap text to fit on screen
+    wrapped = wrapper.wrap(raw_text)
+    if verse:
+      section = verse.section()
+      wrapped.insert(0, section)
+      reference = verse.reference()
+      wrapped.insert(1, reference)
+    assert len(wrapped) <= n_boxes 
+
+    for i in range(n_boxes):
+      text_box = self._content_text_boxes[i]
+      if i < len(wrapped):
+        line = wrapped[i]
+      else:
+        line = ""
+      text_box.set_text(line)
+
+
+
+class SelectMinigame(Screen):
+  '''Screen for selecting what kind of game to play.'''
+
+  def __init__(self, width=800, height=500):
+    super().__init__(width, height)
+
+    self._minigames = [
+      (0, 'MINIGAME NAME', 'EXAMPLE'),
+      (1, 'Blank One Word', 'I have hidden your ____ in my heart that I might not sin against you.'),
+      (2, 'Blank Multiple Words', 'I have ______ ____ word in my heart ____ I might not sin _______ you.'),
+      (3, 'Blank Phrases', '_ ____ ______ your ____ __ __ heart that I might not ___ _______ ___.'),
+      (4, 'Blank All', '_ ____ ______ ____ ____ __ __ _____ ____ _ _____ ___ ___ _______ ___.'),
+    ]
+    n_minigames = len(self._minigames)
+    self._n_boxes = 2 * n_minigames
+    self._content_text_boxes = [None for _ in range(self._n_boxes)]
+    self._draw_content_boxes(
+      n_boxes=self._n_boxes, x_start=0, y_start=ScoreBox.BOX_SIZE
+    )
+    self.update_content()
+
+  def update_content(self):
+    # Wrap text to fit on screen
+    for i, item in enumerate(self._minigames):
+      code, label, example = item
+      text_box = self._content_text_boxes[2*i]
+      if code == 0:
+        line = f'{label}'
+      else:
+        line = f'{code}. {label}'
+
+      text_box.set_text(line)
+
+      text_box = self._content_text_boxes[2*i+1]
+      line = f'        {example}'
+      text_box.set_text(line)
+
+
+class GameScreen(Screen):
+  '''A window for the user to play a game on.'''
+
+  def __init__(self, game_data, width=800, height=400):
+    super().__init__(width, height)
+
+    self._score_bar = ScoreBar(self._manager, game_data)
+
+    self._content_text_boxes = [None for _ in range(N_CONTENT_LINES)]
+    self._draw_content_boxes(
+      n_boxes=N_CONTENT_LINES, x_start=0, y_start=ScoreBox.BOX_SIZE
+    )
+
+  def update_score_bar(self):
+    self._score_bar.update()
 
   def display_end_screen(self):
     text = 'Press any key to exit'

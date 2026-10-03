@@ -32,11 +32,10 @@ WORDS_PER_PHRASE = 3
 
 
 class Game:
-  def __init__(self, model, view, verses, minigame_code):
+  def __init__(self, model, view, verses):
     self._model = model
     self._view = view
     self._verses = verses
-    self._minigame_code = minigame_code
 
   @staticmethod
   def _minigame(code, verse):
@@ -122,11 +121,11 @@ class Game:
         if event.type == pygame.KEYDOWN:
             user_exit = True
 
-  def play(self):
+  def play(self, minigame_code):
     '''Play a game.'''
     for verse in self._verses:
       # FIXME Redundant to make a new minigame for each screen in game?
-      minigame = Game._minigame(self._minigame_code, verse)
+      minigame = Game._minigame(minigame_code, verse)
 
       self.handle_new_screen(verse, minigame)
       while minigame.on_same_screen():
@@ -147,6 +146,7 @@ class Game:
       time.sleep(delay)
 
     self._model.save_to_file()
+
     self._view.display_end_screen()
     self.handle_exit_end_screen()
 
