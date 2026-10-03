@@ -7,6 +7,7 @@ import GameModel
 import GameView
 import Material
 import Rules
+import Session
 
 # FIXME Belongs in Game Rules
 #GAME_MODE = 4
@@ -16,12 +17,6 @@ MAX_ATTEMPTS = 3
 book = '3_John copy'
 #book = 'Philemon' 
 
-rules = Rules.Rules()
-code = rules.choose_minigame()
-model = GameModel.Playthrough(code, MAX_ATTEMPTS)
-view = GameView.GameScreen(model)
-material = Material.Book(book)
-verses = material.verses()
-controller = GameController.Game(model, view, verses)
-controller.play(code)
-
+session = Session.Session(MAX_ATTEMPTS, book)
+session.play_new_game()
+session.handle_exit_end_screen()

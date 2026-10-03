@@ -169,11 +169,31 @@ class SelectMinigame(Screen):
     super().__init__(width, height)
 
     self._minigames = [
-      (0, 'MINIGAME NAME', 'EXAMPLE'),
-      (1, 'Blank One Word', 'I have hidden your ____ in my heart that I might not sin against you.'),
-      (2, 'Blank Multiple Words', 'I have ______ ____ word in my heart ____ I might not sin _______ you.'),
-      (3, 'Blank Phrases', '_ ____ ______ your ____ __ __ heart that I might not ___ _______ ___.'),
-      (4, 'Blank All', '_ ____ ______ ____ ____ __ __ _____ ____ _ _____ ___ ___ _______ ___.'),
+      (
+        0, 
+        "Minigames test different recall skills. Enter a game code via keyboard to choose it.", 
+        'Examples underneath mode for reference.'
+      ),
+      (
+        1,
+        'Blank One Word',
+        'I have hidden your ____ in my heart that I might not sin against you.'
+      ),
+      (
+        2,
+        'Blank Multiple Words',
+        'I have ______ ____ word in my heart ____ I might not sin _______ you.'
+      ),
+      (
+        3,
+        'Blank Phrases',
+        '_ ____ ______ your ____ __ __ heart that I might not ___ _______ ___.'
+      ),
+      (
+        4,
+        'Blank All',
+         '_ ____ ______ ____ ____ __ __ _____ ____ _ _____ ___ ___ _______ ___.'
+      ),
     ]
     n_minigames = len(self._minigames)
     self._n_boxes = 2 * n_minigames
@@ -217,6 +237,6 @@ class GameScreen(Screen):
     self._score_bar.update()
 
   def display_end_screen(self):
-    text = 'Press any key to exit'
+    text = 'Press ESC to exit or any other key to keep playing'
     self.update_content(text)
     self.refresh_screen()

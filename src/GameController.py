@@ -8,7 +8,6 @@ import pygame
 import GameView
 import Minigame
 
-
 # Basic Game Logic:
 # User guesses right
 #   If no more words, change screen
@@ -25,7 +24,7 @@ HINT_KEY = pygame.K_SLASH
 delay = 0.25  # seconds to wait before changing a screen
 
 # In Modes 1 & 2 user must reveal N words to go to next screen
-N_WORDS_PER_SCREEN = 3 
+N_WORDS_PER_SCREEN = 3
 
 # In Mode 3 user must reveal N phrases with this length
 WORDS_PER_PHRASE = 3
@@ -110,21 +109,9 @@ class Game:
     else: # is_incorrect
       self.handle_incorrect(verse, minigame)
 
-  def handle_exit_end_screen(self):
-    '''Handle exiting the end screen.'''
-    user_exit = False
-    while not user_exit:
-      for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-          sys.exit()
-
-        if event.type == pygame.KEYDOWN:
-            user_exit = True
-
   def play(self, minigame_code):
     '''Play a game.'''
     for verse in self._verses:
-      # FIXME Redundant to make a new minigame for each screen in game?
       minigame = Game._minigame(minigame_code, verse)
 
       self.handle_new_screen(verse, minigame)
@@ -148,5 +135,4 @@ class Game:
     self._model.save_to_file()
 
     self._view.display_end_screen()
-    self.handle_exit_end_screen()
 

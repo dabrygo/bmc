@@ -5,7 +5,6 @@ import pygame
 import GameView
 
 
-
 class Rules:
   def choose_minigame(self):
     '''Allow the user to choose a minigame.'''
