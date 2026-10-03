@@ -5,8 +5,8 @@ import time
 
 import pygame
 
-import Display
-import GameMode
+import GameView
+import Minigame
 
 
 # Basic Game Logic:
@@ -32,37 +32,38 @@ WORDS_PER_PHRASE = 3
 
 
 class Game:
-  def __init__(self, model, view, verses, mode):
+  def __init__(self, model, view, verses, minigame_code):
     self._model = model
     self._view = view
     self._verses = verses
-    self._mode = mode
+    self._minigame_code = minigame_code
 
-  def _game_mode(self, mode, verse):
+  @staticmethod
+  def _minigame(code, verse):
     '''Choose what kind of game to play.'''
-    if mode == 1:
-      return GameMode.BlankOneWord(
+    if code == 1:
+      return Minigame.BlankOneWord(
         verse, n_words=N_WORDS_PER_SCREEN,
       )
-    elif mode == 2:
-       return GameMode.BlankMultipleWords(
+    elif code == 2:
+      return Minigame.BlankMultipleWords(
         verse, n_words=N_WORDS_PER_SCREEN,
       )
-    elif mode == 3:
-      return GameMode.BlankPhrases(
+    elif code == 3:
+      return Minigame.BlankPhrases(
         verse,
         n_phrases=N_WORDS_PER_SCREEN,
         words_per_phrase=WORDS_PER_PHRASE,
       )
-    elif mode == 4:
-      return GameMode.BlankAllWords(verse)
+    elif code == 4:
+      return Minigame.BlankAllWords(verse)
     else:
-      raise ValueError(f"Unsupported game mode {mode}")
+      raise ValueError(f"Unsupported minigame {code}")
 
-  def handle_new_screen(self, verse, mode):
+  def handle_new_screen(self, verse, minigame):
     '''Update to a new screen.'''
-    mode.prepare_screen_for_play()
-    content = mode.content()
+    minigame.prepare_screen_for_play()
+    content = minigame.content()
     self._view.update_content(
       raw_text=content, verse=verse
     )
@@ -72,43 +73,43 @@ class Game:
     self._model.clock_ticked()
     self._view.update_score_bar()
 
-  def handle_correct(self, verse, mode):
+  def handle_correct(self, verse, minigame):
     '''Do work for when the user guesses correctly.'''
     self._model.guess_right()
     self._view.update_score_bar()
-    text = mode.on_correct_guess()
+    text = minigame.on_correct_guess()
     self._view.update_content(text, verse=verse)
 
-  def handle_hint(self, verse, mode):
+  def handle_hint(self, verse, minigame):
     '''Do work for when the user requests a hint.'''
     self._model.request_hint()
     self._view.update_score_bar()
-    text = mode.on_hint()
+    text = minigame.on_hint()
     self._view.update_content(text, verse=verse)
 
-  def handle_incorrect(self, verse, mode):
+  def handle_incorrect(self, verse, minigame):
     '''Do work for when the user guesses incorrectly.'''
     self._model.guess_wrong()
     self._view.update_score_bar()
-    text = mode.on_incorrect_guess()
+    text = minigame.on_incorrect_guess()
     self._view.update_content(text, verse=verse)
 
-  def handle_user_input(self, verse, mode):
+  def handle_user_input(self, verse, minigame):
     '''Handle user input for the current screen.'''
 
     pressed_keys = pygame.key.get_pressed()
 
-    expected_input = mode.expected_input()
+    expected_input = minigame.expected_input()
     is_correct = pressed_keys[expected_input]
 
     is_hint = pressed_keys[HINT_KEY]
 
     if is_correct:
-      self.handle_correct(verse, mode)
+      self.handle_correct(verse, minigame)
     elif is_hint:
-      self.handle_hint(verse, mode)
+      self.handle_hint(verse, minigame)
     else: # is_incorrect
-      self.handle_incorrect(verse, mode)
+      self.handle_incorrect(verse, minigame)
 
   def handle_exit_end_screen(self):
     '''Handle exiting the end screen.'''
@@ -124,19 +125,20 @@ class Game:
   def play(self):
     '''Play a game.'''
     for verse in self._verses:
-      mode = self._game_mode(self._mode, verse)
+      # FIXME Redundant to make a new minigame for each screen in game?
+      minigame = Game._minigame(self._minigame_code, verse)
 
-      self.handle_new_screen(verse, mode)
-      while mode.on_same_screen():
+      self.handle_new_screen(verse, minigame)
+      while minigame.on_same_screen():
         for event in pygame.event.get():
           if event.type == pygame.QUIT:
             sys.exit()
 
-          if event.type == Display.TIMER_EVENT:
+          if event.type == GameView.TIMER_EVENT:
             self.handle_clock_tick()
 
           if event.type == pygame.KEYDOWN:
-            self.handle_user_input(verse, mode)
+            self.handle_user_input(verse, minigame)
 
           self._view.process_events(event)
 

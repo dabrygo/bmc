@@ -39,7 +39,7 @@ letters = {
 }
 
 
-class GameMode:
+class Minigame:
   '''An abstract way of playing the game.'''
 
   def __init__(self, verse):
@@ -135,7 +135,7 @@ class GameMode:
     return text
 
 
-class BlankOneWord(GameMode):
+class BlankOneWord(Minigame):
   '''User guesses one randomly selected word at a time.'''
   def __init__(self, verse, n_words):
     super().__init__(verse)
@@ -170,7 +170,7 @@ class BlankOneWord(GameMode):
     return self._sample.text()
 
 
-class BlankMultipleWords(GameMode):
+class BlankMultipleWords(Minigame):
   '''User iteratively guesses multiple randomly blanked words.'''
   def __init__(self, verse, n_words):
     super().__init__(verse)
@@ -185,7 +185,7 @@ class BlankMultipleWords(GameMode):
     super()._hide_words_at_indices(i_hide)
 
 
-class BlankPhrases(GameMode):
+class BlankPhrases(Minigame):
   '''User iteratively guesses randomly blanked phrases.'''
   def __init__(self, verse, n_phrases, words_per_phrase=3):
     super().__init__(verse)
@@ -206,7 +206,7 @@ class BlankPhrases(GameMode):
     super()._hide_words_at_indices(i_hide)
 
 
-class BlankAllWords(GameMode):
+class BlankAllWords(Minigame):
   '''User guesses all words.'''
   def __init__(self, verse):
     super().__init__(verse)

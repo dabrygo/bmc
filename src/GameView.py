@@ -57,33 +57,33 @@ class ContentBox:
 
 
 class ScoreBox:
-    BOX_SIZE = 100
+  BOX_SIZE = 100
 
-    def __init__(self, manager, label, position, tally):
-      self._label = label
-      self._tally = tally
-      self._position = position
-      self._gui_element = pygame_gui.elements.UITextBox(
-        html_text=self._text(),
-        relative_rect=pygame.Rect(
-            self._position,
-            (ScoreBox.BOX_SIZE, ScoreBox.BOX_SIZE)
-        ),
-        manager=manager,
-        object_id=pygame_gui.core.ObjectID(
-            class_id='@score_box',
-            object_id=f'#score_box_{self._label.lower()}'
-        )
+  def __init__(self, manager, label, position, tally):
+    self._label = label
+    self._tally = tally
+    self._position = position
+    self._gui_element = pygame_gui.elements.UITextBox(
+      html_text=self._text(),
+      relative_rect=pygame.Rect(
+          self._position,
+          (ScoreBox.BOX_SIZE, ScoreBox.BOX_SIZE)
+      ),
+      manager=manager,
+      object_id=pygame_gui.core.ObjectID(
+          class_id='@score_box',
+          object_id=f'#score_box_{self._label.lower()}'
       )
+    )
 
-    def _text(self):
-      label = self._label.title()
-      count = self._tally.value()
-      return htmlify(f"{label}\n{count:05d}")
+  def _text(self):
+    label = self._label.title()
+    count = self._tally.value()
+    return htmlify(f"{label}\n{count:05d}")
 
-    def update(self):
-      text = self._text()
-      self._gui_element.set_text(text)
+  def update(self):
+    text = self._text()
+    self._gui_element.set_text(text)
 
 
 class ScoreBar:
