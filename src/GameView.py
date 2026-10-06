@@ -1,5 +1,6 @@
 '''Present game to user.'''
 
+import os
 import textwrap
 
 import pygame
@@ -109,10 +110,10 @@ class Screen:
     size = (width, height)
     self._screen = pygame.display.set_mode(size)
 
-    self._manager = pygame_gui.UIManager(
-        size,
-        theme_path="rsc/bmc_default_theme.json",
-    )
+    theme_path = "rsc/themes/bmc_default_theme.json"
+    if not os.path.exists(theme_path):
+      raise FileNotFoundError(f"Theme file not found: {theme_path}")
+    self._manager = pygame_gui.UIManager(size, theme_path=theme_path)
     self._manager.add_font_paths(font_face, font_path)
 
     # Set the timer to trigger every second 

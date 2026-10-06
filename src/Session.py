@@ -15,6 +15,10 @@ class Session:
     self._rules = Rules.Rules()
     self._material = Material.Book(book)
 
+  @classmethod
+  def from_config(cls, config):
+    return cls(config.max_attempts(), config.book())
+
   def play_new_game(self):
     minigame_code = self._rules.choose_minigame()
     model = GameModel.Playthrough(minigame_code, self._n_attempts)
