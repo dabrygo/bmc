@@ -16,14 +16,14 @@ To run test suite:
 
 ```
 > cd src
-> python -m unittest discover
+> python -m unittest discover -s "./test" -p "test_*.py" 
 ```
 
 To view test coverage:
 
 ```
 > cd src
-> coverage run -m unittest discover
+> coverage run -m unittest discover -s "./test" -p "test_*.py"
 > coverage report # for text report OR
 > coverage html # for html report
 ```

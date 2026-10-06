@@ -1,7 +1,7 @@
 import unittest
 
-import Parser
-import Verse
+from src import Parser
+from src import Verse
 
 
 class TestSimple(unittest.TestCase):
@@ -12,7 +12,6 @@ class TestSimple(unittest.TestCase):
     verses = parser.parse()
     actual = verses[0]
     self.assertEqual(expected, actual)
-
 
 if __name__ == '__main__':
   unittest.main()

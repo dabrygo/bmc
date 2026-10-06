@@ -2,7 +2,7 @@
 
 import abc
 
-import Pattern
+from src import Pattern
 
 
 class Verse:

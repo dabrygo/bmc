@@ -2,8 +2,8 @@
 
 import abc
 
-import Pattern
-import Verse
+from src import Pattern
+from src import Verse
 
 
 class Parser:

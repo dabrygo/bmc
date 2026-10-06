@@ -1,6 +1,6 @@
 import unittest
 
-import Verse
+from src import Verse
 
 class TestDefault(unittest.TestCase):
   def test_equals(self):
@@ -50,7 +50,3 @@ class TestFake(unittest.TestCase):
   def test_lines(self):
     verse = Verse.Fake(section='Section', reference='Book 1:23', text='Verse verse verse')
     verse.lines()  
-
-
-if __name__ == '__main__':
-  unittest.main()
