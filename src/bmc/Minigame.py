@@ -5,9 +5,9 @@ import random
 
 import pygame
 
-import Sample
-import Tokens
-import Word
+from bmc import Sample
+from bmc import Tokens
+from bmc import Word
 
 letters = {
   pygame.K_a: 'a',

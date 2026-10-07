@@ -1,8 +1,7 @@
 '''Collection of data for a single screen.'''
 
 import abc
-
-from src import Pattern
+import re
 
 
 class Verse:
@@ -10,6 +9,11 @@ class Verse:
     return self.reference() == other.reference() \
       and self.section()==other.section() \
       and self.text()==other.text()
+
+  @abc.abstractmethod
+  def within(self, string):
+    '''Returns `true` if a verse can be found in the given string.'''
+    pass
 
   @abc.abstractmethod
   def reference(self):
@@ -38,6 +42,10 @@ class Fake(Verse):
     self._section = section
     self._text = text
 
+  def within(self, string):
+    '''Returns `true` if a verse can be found in the given string.'''
+    pass
+
   def reference(self):
     return self._reference
 
@@ -56,37 +64,27 @@ class Default(Verse):
     self._section = section
     self._text = text
 
-  def _pattern(self):
-    return Pattern.Verse(self._text)
+  @staticmethod
+  def _find(string):
+    pattern = r'((\w+ ){1,3}\d+:\d+) (.+)'
+    return re.search(pattern, string)
+
+  @staticmethod
+  def within(string):
+    '''Returns `true` if a verse can be found in the given string.'''
+    return Default._find(string) is not None
+
+  def _verse(self):
+    return Default._find(self._text)
  
   def reference(self):
-     pattern = self._pattern()
-     return pattern.group(1)
+     return self._verse().group(1)
 
   def section(self):
     return self._section
 
   def text(self):
-    pattern = self._pattern()
-    return pattern.group(3)
+    return self._verse().group(3)
 
   def lines(self):
     return self.text()
-
-
-class Blanked(Verse):
-  def __init__(self, verse, encoding):
-    self._verse = verse 
-    self._encoding = encoding
-
-  def reference(self):
-    pass
-
-  def section(self):
-    pass
-
-  def text(self):
-    return self._encoding.encoded()
-
-  def lines(self):
-    return self._verse.lines()

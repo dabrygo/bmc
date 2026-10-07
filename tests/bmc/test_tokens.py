@@ -1,6 +1,6 @@
 import unittest
 
-from src import Tokens
+from src.bmc import Tokens
 
 @unittest.skip("Update to match implementation")
 class TestTokens(unittest.TestCase):

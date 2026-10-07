@@ -5,8 +5,8 @@ import time
 
 import pygame
 
-import GameView
-import Minigame
+from bmc import GameView
+from bmc import Minigame
 
 # Basic Game Logic:
 # User guesses right

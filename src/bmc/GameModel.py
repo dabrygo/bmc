@@ -4,7 +4,8 @@ import csv
 import os.path
 import time
 
-import Score
+from bmc import Score
+
 
 class Playthrough:
   def __init__(self, mode_code, max_attempts=0):

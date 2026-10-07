@@ -2,8 +2,8 @@
 Entry point file for game.
 '''
 
-import Configuration
-import Session
+from bmc import Configuration
+from bmc import Session
 
 config = Configuration.Configuration.from_file()
 session = Session.Session.from_config(config)

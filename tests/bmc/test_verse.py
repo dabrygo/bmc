@@ -1,6 +1,6 @@
 import unittest
 
-from src import Verse
+from src.bmc import Verse
 
 class TestDefault(unittest.TestCase):
   def test_equals(self):

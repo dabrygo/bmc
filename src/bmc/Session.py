@@ -2,28 +2,30 @@ import sys
 
 import pygame
 
-import GameController
-import GameModel
-import GameView
-import Material
-import Rules
+from bmc import GameController
+from bmc import GameModel
+from bmc import GameView
+from bmc import Material
+from bmc import Rules
 
 
 class Session:
-  def __init__(self, n_attempts, book):
+  def __init__(self, n_attempts, material):
     self._n_attempts = n_attempts
+    self._material = material
     self._rules = Rules.Rules()
-    self._material = Material.Book(book)
 
   @classmethod
   def from_config(cls, config):
-    return cls(config.max_attempts(), config.book())
+    book_name = config.book()
+    book = Material.Book.from_name(book_name)
+    return cls(config.max_attempts(), book)
 
   def play_new_game(self):
     minigame_code = self._rules.choose_minigame()
     model = GameModel.Playthrough(minigame_code, self._n_attempts)
     view = GameView.GameScreen(model)
-    verses = self._material.verses()
+    verses = self._material.parse()
     controller = GameController.Game(model, view, verses)
     controller.play(minigame_code)
 

@@ -2,7 +2,7 @@ import sys
 
 import pygame
 
-import GameView
+from bmc import GameView
 
 
 class Rules:

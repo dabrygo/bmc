@@ -3,7 +3,7 @@
 import abc
 import re
 
-from . import Word
+from bmc import Word
 
 
 class Tokens(abc.ABC):
