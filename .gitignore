@@ -4,6 +4,7 @@ __pycache__
 /.project
 /.pydevproject
 .vscode
+*.egg-info
 
 # Run environment
 venv

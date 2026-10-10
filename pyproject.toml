@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bmc"
+version = "0.0.1"
+description = "Aid to memorizing passages of text"
+dependencies = [
+    # "requests>=2.28.0", Add your dependencies here
+]
