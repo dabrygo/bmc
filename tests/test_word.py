@@ -1,6 +1,6 @@
 import unittest
 
-from src.bmc import Word
+from bmc import Word
 
 
 class TestClassic(unittest.TestCase):

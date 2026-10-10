@@ -1,11 +1,11 @@
 import unittest
 
-from bmc.Tokens import Classic
+from bmc import Tokens
 
 @unittest.skip("Update to match implementation")
 class TestTokens(unittest.TestCase):
   def test_text(self):
-    tokens = Classic('I say, "Hi!"')
+    tokens = Tokens.Classic('I say, "Hi!"')
     self.assertEqual('_ ___, "__!"', tokens.text()) 
     tokens.shift()
     self.assertEqual('I ___, "__!"', tokens.text())
@@ -20,11 +20,11 @@ class TestTokens(unittest.TestCase):
       pass
 
   def test_current(self):
-    tokens = Classic('I say, "Hi!"')
+    tokens = Tokens.Classic('I say, "Hi!"')
     self.assertEqual('I', tokens.current().show()) 
 
   def test_shift(self):
-    tokens = Classic('I say, "Hi!"')
+    tokens = Tokens.Classic('I say, "Hi!"')
     self.assertEqual("I", tokens.current().show())
     tokens.shift()
     self.assertEqual("say", tokens.current().show())

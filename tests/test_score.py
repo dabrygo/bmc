@@ -1,6 +1,6 @@
 import unittest
 
-from src.bmc import Score
+from bmc import Score
 
 class TestScore(unittest.TestCase):
   def assertIsPositive(self, n):
