@@ -42,12 +42,14 @@ letters = {
 class Minigame:
   '''An abstract way of playing the game.'''
 
-  def __init__(self, verse):
+  def __init__(self, verse, seed=None):
     self._verse = verse
     text = self._verse.text()
     self._tokens = Tokens.NoBlanking(text)
     self._tokenized = self._tokens.tokenize()
     self._sample = Sample.Classic(self._tokenized)
+    if seed:
+      random.seed(seed)
 
   def on_same_screen(self):
     '''Returns `false` when time to change to next screen.'''
@@ -137,8 +139,8 @@ class Minigame:
 
 class BlankOneWord(Minigame):
   '''User guesses one randomly selected word at a time.'''
-  def __init__(self, verse, n_words):
-    super().__init__(verse)
+  def __init__(self, verse, n_words, seed):
+    super().__init__(verse=verse, seed=seed)
     self._n_words = n_words # How many words user must reveal
     self._i_words = 0 # How many words user has revealed
     self._hide_indices = super()._random_indices(
@@ -172,8 +174,8 @@ class BlankOneWord(Minigame):
 
 class BlankMultipleWords(Minigame):
   '''User iteratively guesses multiple randomly blanked words.'''
-  def __init__(self, verse, n_words):
-    super().__init__(verse)
+  def __init__(self, verse, n_words, seed=None):
+    super().__init__(verse=verse, seed=seed)
     self._tokenized = self._tokens.tokenize()
     self._n_words = n_words # How many words user must reveal
 
@@ -187,8 +189,8 @@ class BlankMultipleWords(Minigame):
 
 class BlankPhrases(Minigame):
   '''User iteratively guesses randomly blanked phrases.'''
-  def __init__(self, verse, n_phrases, words_per_phrase=3):
-    super().__init__(verse)
+  def __init__(self, verse, n_phrases, words_per_phrase=3, seed=None):
+    super().__init__(verse=verse, seed=seed)
     self._tokenized = self._tokens.tokenize()
     self._n_phrases = n_phrases # How many words user must reveal
     self._words_per_phrase = words_per_phrase
