@@ -139,7 +139,7 @@ class Minigame:
 
 class BlankOneWord(Minigame):
   '''User guesses one randomly selected word at a time.'''
-  def __init__(self, verse, n_words, seed):
+  def __init__(self, verse, n_words, seed=None):
     super().__init__(verse=verse, seed=seed)
     self._n_words = n_words # How many words user must reveal
     self._i_words = 0 # How many words user has revealed
