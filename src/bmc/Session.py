@@ -10,23 +10,30 @@ from bmc import Rules
 
 
 class Session:
-  def __init__(self, n_attempts, material):
+  def __init__(self, n_attempts, material, rules):
     self._n_attempts = n_attempts
     self._material = material
-    self._rules = Rules.Rules()
+    self._rules = rules
 
   @classmethod
   def from_config(cls, config):
     book_name = config.book()
     book = Material.Book.from_name(book_name)
-    return cls(config.max_attempts(), book)
+    rules = Rules.Rules.from_config(config)
+    return cls(config.max_attempts(), book, rules)
 
   def play_new_game(self):
     minigame_code = self._rules.choose_minigame()
-    model = GameModel.Playthrough(minigame_code, self._n_attempts)
-    view = GameView.GameScreen(model)
     verses = self._material.parse()
-    controller = GameController.Game(model, view, verses)
+    sequence_name = self._rules.sequence()
+    model = GameModel.Playthrough(
+      mode_code=minigame_code, 
+      sequence=sequence_name,
+      max_attempts=self._n_attempts,
+    )
+    view = GameView.GameScreen(model)
+    sequenced = self._rules.sequenced(verses)
+    controller = GameController.Game(model, view, sequenced)
     controller.play(minigame_code)
 
   def handle_exit_end_screen(self):

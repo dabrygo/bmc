@@ -8,7 +8,7 @@ from bmc import Score
 
 
 class Playthrough:
-  def __init__(self, mode_code, max_attempts=0):
+  def __init__(self, mode_code, sequence, max_attempts=0):
     self._correct = Score.Correct()
     self._incorrect = Score.Incorrect()
     self._hints = Score.Hints()
@@ -22,6 +22,7 @@ class Playthrough:
     self._start_time = time.strftime("%Y-%m-%d %H:%M:%S")
     self._mode_code = mode_code
     self._attempts = Score.Attempts(count_start=0, count_max=max_attempts)
+    self._sequence = sequence
 
   def clock_ticked(self):
     self._timer.increment()
@@ -82,6 +83,7 @@ class Playthrough:
       'Hints': self.n_hints(), 
       'Time': self.time(),
       'Game_Mode': self._mode_code,
+      'Sequence': self._sequence,
     }
     out_file = 'rsc/scores.csv'
     if not os.path.exists(out_file):

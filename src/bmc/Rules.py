@@ -1,3 +1,4 @@
+import random
 import sys
 
 import pygame
@@ -6,6 +7,34 @@ from bmc import GameView
 
 
 class Rules:
+  def __init__(self, sequence, seed=None):
+    self._sequence = sequence
+    if seed is not None:
+      random.seed(seed)
+
+  @classmethod
+  def from_config(cls, config):
+    return cls(config.sequence())
+
+  def sequenced(self, material):
+    '''Choose order to present material to user'''
+    sequence = self.sequence()
+    if sequence == 'sequential':
+      return material
+    elif sequence == 'reverse':
+      return material[::-1]
+    elif sequence == 'random':
+      return random.sample(material, len(material))
+    assert False, f"Unknown sequence code: {sequence}"
+
+  def sequence(self):
+    '''Choose order to present material to user'''
+    supported_sequences = ['sequential', 'reverse', 'random']
+    if self._sequence in supported_sequences:
+      return self._sequence
+    else:
+      raise ValueError(f"Unknown sequence code: {self._sequence}")
+
   def choose_minigame(self):
     '''Allow the user to choose a minigame.'''
     selection_view = GameView.SelectMinigame()

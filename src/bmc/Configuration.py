@@ -19,5 +19,8 @@ class Configuration:
   def book(self):
     return self._settings['Book']
 
+  def sequence(self):
+    return self._settings['Sequence']
+
   def max_attempts(self):
     return int(self._settings['MaxAttempts'])
