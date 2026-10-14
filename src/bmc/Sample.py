@@ -2,7 +2,7 @@
 
 import abc
 
-import Word
+from bmc import Word
 
 
 class Sample(abc.ABC):

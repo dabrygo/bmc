@@ -1,6 +1,6 @@
 import unittest
 
-import Score
+from bmc import Score
 
 class TestScore(unittest.TestCase):
   def assertIsPositive(self, n):
@@ -33,7 +33,3 @@ class TestScore(unittest.TestCase):
   def test_time(self):
     score = Score.Total.Fake(time=1)
     self.assertIsNegative(score.value())
-
-
-if __name__ == '__main__':
-  unittest.main()

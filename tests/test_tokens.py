@@ -1,7 +1,6 @@
 import unittest
 
-import Tokens
-import Word
+from bmc import Tokens
 
 @unittest.skip("Update to match implementation")
 class TestTokens(unittest.TestCase):
@@ -36,7 +35,3 @@ class TestTokens(unittest.TestCase):
       self.fail()
     except Exception:
       pass
-
-
-if __name__ == '__main__':
-  unittest.main()

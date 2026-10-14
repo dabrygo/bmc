@@ -1,9 +1,7 @@
 '''Collection of data for a single screen.'''
 
 import abc
-import textwrap
-
-import Pattern
+import re
 
 
 class Verse:
@@ -13,19 +11,28 @@ class Verse:
       and self.text()==other.text()
 
   @abc.abstractmethod
+  def within(self, string):
+    '''Returns `true` if a verse can be found in the given string.'''
+    pass
+
+  @abc.abstractmethod
   def reference(self):
+    '''Unique identifier for this verse.'''
     pass
 
   @abc.abstractmethod
   def section(self):
+    '''Contextual description of this verse and other verses near it.'''
     pass
 
   @abc.abstractmethod
   def text(self):
+    '''Plain text of this verse.'''
     pass
 
   @abc.abstractmethod
   def lines(self):
+    '''Text of this verse as it appears originally. (Preserves whitespace, e.g.)'''
     pass
 
 
@@ -34,6 +41,10 @@ class Fake(Verse):
     self._reference = reference
     self._section = section
     self._text = text
+
+  def within(self, string):
+    '''Returns `true` if a verse can be found in the given string.'''
+    pass
 
   def reference(self):
     return self._reference
@@ -49,49 +60,31 @@ class Fake(Verse):
 
 
 class Default(Verse):
-  def __init__(self, section, text, max_width=None):
+  def __init__(self, section, text):
     self._section = section
     self._text = text
-    self._max_width = max_width
 
-  def _pattern(self):
-    return Pattern.Verse(self._text)
+  @staticmethod
+  def _find(string):
+    pattern = r'((\w+ ){1,3}\d+:\d+) (.+)'
+    return re.search(pattern, string)
+
+  @staticmethod
+  def within(string):
+    '''Returns `true` if a verse can be found in the given string.'''
+    return Default._find(string) is not None
+
+  def _verse(self):
+    return Default._find(self._text)
  
   def reference(self):
-     pattern = self._pattern()
-     return pattern.group(1)
+     return self._verse().group(1)
 
   def section(self):
     return self._section
 
   def text(self):
-    pattern = self._pattern()
-    return pattern.group(3)
+    return self._verse().group(3)
 
   def lines(self):
-    text = self.text()
-    if not self._max_width:
-      return text
-    wrapper = textwrap.TextWrapper(self._max_width)
-    return wrapper.wrap(text)
-
-
-class Blanked(Verse):
-  def __init__(self, verse, encoding):
-    self._verse = verse 
-    self._encoding = encoding
-
-  def reference(self):
-    pass
-
-  def section(self):
-    pass
-
-  def text(self):
-    return self._encoding.encoded()
-
-  def lines(self):
-    return self._verse.lines()
-
-
-
+    return self.text()

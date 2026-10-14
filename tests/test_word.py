@@ -1,6 +1,6 @@
 import unittest
 
-import Word
+from bmc import Word
 
 
 class TestClassic(unittest.TestCase):
@@ -24,7 +24,3 @@ class TestClassic(unittest.TestCase):
     self.assertEqual('****', word.guess('1'))
     self.assertEqual('****', word.guess(','))
     self.assertEqual('bird', word.guess('B'))
-
-
-if __name__ == '__main__':
-  unittest.main()
