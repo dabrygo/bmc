@@ -17,10 +17,11 @@ class Session:
 
   @classmethod
   def from_config(cls, config):
+    n_attempts = config.max_attempts()
     book_name = config.book()
     book = Material.Book.from_name(book_name)
     rules = Rules.Rules.from_config(config)
-    return cls(config.max_attempts(), book, rules)
+    return cls(n_attempts, book, rules)
 
   def play_new_game(self):
     minigame_code = self._rules.choose_minigame()
