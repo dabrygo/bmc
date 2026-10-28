@@ -8,6 +8,73 @@ import pygame
 from bmc import GameView
 
 
+class Sequence:
+  def __init__(self, filename, material):
+    self._filename = filename
+    self._material = material
+
+  @classmethod
+  def from_file(cls, material):
+    return cls('rsc/sequence.csv', material)
+
+  def _read(self):
+    message = f"Custom sequence file not found: {self._filename}"
+    if not os.path.exists(self._filename):
+      raise FileNotFoundError(message)
+    with open(self._filename, newline='') as csvfile:
+      lines = []
+      reader = csv.reader(csvfile)
+      for i, row in enumerate(reader):
+        is_header_row = i == 0
+        if is_header_row:
+          continue
+        lines.append(row)
+    return lines
+
+  def verses(self):
+    sequence = []
+    lines = self._read()
+    for i, row in enumerate(lines):
+      n_verses = self._n_verses(row, i)
+      type_ = self._type(row, i)
+      verses = self._verses(row, i)
+      verse, *_ = verses
+      material_verse = self._find_verse_in_material(verse)
+      sequence.append(material_verse)
+    return sequence
+
+  def _n_verses(self, row, i):
+    n_verses = int(row[0])
+    if n_verses < 0:
+      raise ValueError(f"Expected at least one verse but found {n_verses} in line {i}")
+    if n_verses > 1:
+      raise NotImplementedError(f"More than one verse ({n_verses} in line {i}) not yet supported")
+    return n_verses
+
+  def _type(self, row, i):
+    type_ = row[1]
+    if type_ == 'consecutive':
+      raise NotImplementedError(f"'consecutive' not yet supported (line {i})")
+    elif type_ == 'reference':
+      return type_
+    else:
+      raise ValueError(f"Unknown type '{type_}' in line {i}")
+
+  def _verses(self, row, i):
+    verses = row[2:]
+    if len(verses) == 0:
+      raise ValueError(f"Expected at least one verse but found none in line {i}")
+    if len(verses) > 1:
+      raise NotImplementedError(f"More than one verse ({len(verses)} in line {i}) not yet supported")
+    return verses
+
+  def _find_verse_in_material(self, verse):
+    for material_verse in self._material:
+      if material_verse.reference() == verse:
+        return material_verse
+    raise ValueError(f"Could not find verse {verse}")
+
+
 class Rules:
   def __init__(self, sequence, seed=None):
     self._sequence = sequence
@@ -22,40 +89,8 @@ class Rules:
     '''Choose order to present material to user'''
     sequence = self.sequence()
     if sequence == 'custom':
-      reordered_material = []
-      sequence_file = 'rsc/sequence.csv'
-      if not os.path.exists(sequence_file):
-        raise FileNotFoundError(f"Custom sequence file not found: {sequence_file}")
-      with open(sequence_file, newline='') as csvfile:
-        reader = csv.reader(csvfile)
-        for i, row in enumerate(reader):
-          is_header_row = i == 0
-          if is_header_row:
-            continue
-
-          n_verses, type_, *verses = row
-
-          n_verses = int(n_verses)
-          if n_verses < 0:
-            raise ValueError(f"Expected at least one verse but found {n_verses} in line {i}")
-          if n_verses > 1:
-            raise NotImplementedError(f"More than one verse ({n_verses} in line {i}) not yet supported")
- 
-          if type_ == 'consecutive':
-            raise NotImplementedError(f"'consecutive' not yet supported (line {i})")
-          elif type_ == 'reference':
-            pass
-          else:
-            raise ValueError(f"Unknown type '{type_}' in line {i}")
-
-          found = False
-          for material_verse in material:
-            verse, *_ = verses
-            if material_verse.reference() == verse:
-              reordered_material.append(material_verse)
-              found = True
-          if not found:
-            raise ValueError(f"Could not find verse {verse}")
+      sequence_file = Sequence.from_file(material)
+      reordered_material = sequence_file.verses()
       return reordered_material
     elif sequence == 'sequential':
       return material
