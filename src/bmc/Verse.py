@@ -4,11 +4,47 @@ import abc
 import re
 
 
+class Reference:
+  def __init__(self, book, chapter, verse_number):
+    self._book = book
+    self._chapter = chapter
+    self._verse_number = verse_number
+
+  @classmethod
+  def from_string(cls, string):
+    pattern = r'((\w+ ){1,3})(\d+):(\d+)'
+    match = re.search(pattern, string)
+    if match is None:
+      raise ValueError(f"Invalid reference string: {string}")
+    book = match.group(1).strip()
+    chapter = int(match.group(3))
+    verse = int(match.group(4))
+    return cls(book, chapter, verse)
+
+  def __str__(self):
+    return f"{self._book} {self._chapter}:{self._verse_number}"
+
+  def __eq__(self, other):
+    return str(self) == str(other)
+
+  def __lt__(self, other):
+    if self._book != other._book:
+      raise NotImplementedError("Book comparison not yet implemented")
+    if self._chapter < other._chapter:
+      return True
+    if self._chapter > other._chapter:
+      return False
+    return self._verse_number < other._verse_number
+
+
 class Verse:
   def __eq__(self, other):
     return self.reference() == other.reference() \
       and self.section()==other.section() \
       and self.text()==other.text()
+
+  def __lt__(self, other):
+    return self.reference() < other.reference()
 
   @abc.abstractmethod
   def within(self, string):
@@ -63,6 +99,14 @@ class Default(Verse):
   def __init__(self, section, text):
     self._section = section
     self._text = text
+    ref_str = self._verse().group(1)
+    self._reference = Reference.from_string(ref_str)
+ 
+  def __eq__(self, other):
+    return self._reference == other._reference
+
+  def __lt__(self, other):
+    return self._reference < other._reference
 
   @staticmethod
   def _find(string):
@@ -78,7 +122,7 @@ class Default(Verse):
     return Default._find(self._text)
  
   def reference(self):
-     return self._verse().group(1)
+    return str(self._reference)
 
   def section(self):
     return self._section

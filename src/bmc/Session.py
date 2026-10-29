@@ -33,7 +33,8 @@ class Session:
       max_attempts=self._n_attempts,
     )
     view = GameView.GameScreen(model)
-    sequenced = self._rules.sequenced(verses)
+    start_time = model.start_time()
+    sequenced = self._rules.sequenced(verses, start_time)
     controller = GameController.Game(model, view, sequenced)
     controller.play(minigame_code)
 

@@ -74,6 +74,9 @@ class Playthrough:
   def n_attempts(self):
     return self._attempts.value()
 
+  def start_time(self):
+    return self._start_time
+
   def save_to_file(self):
     game_data = {
       'Time_Start': self._start_time,

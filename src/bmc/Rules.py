@@ -1,6 +1,7 @@
 import csv
 import os
 import random
+import shutil
 import sys
 
 import pygame
@@ -30,6 +31,29 @@ class Sequence:
           continue
         lines.append(row)
     return lines
+
+  def update_file(self, new_sequence):
+    with open(self._filename, 'w', newline='') as csvfile:
+      writer = csv.writer(csvfile)
+      writer.writerow(['n_verses', 'type', 'verse'])
+      for verse in new_sequence:
+        row = [1, 'reference', verse.reference()]
+        writer.writerow(row)
+
+  def archive_file(self, start_time):
+    if not os.path.exists(self._filename):
+      raise FileNotFoundError(f"Custom sequence file not found: {self._filename}")
+
+    archive_dir = 'rsc/sequences'
+    if not os.path.exists(archive_dir):
+      os.makedirs(archive_dir)
+
+    original = self._filename
+    basename = os.path.basename(original)
+    filename, _ = os.path.splitext(basename)
+    suffix = start_time.replace(':', '-').replace(' ', 'T')
+    archive = f'rsc/sequences/{filename}_{suffix}.csv'
+    shutil.copy(original, archive)
 
   def verses(self):
     sequence = []
@@ -85,21 +109,25 @@ class Rules:
   def from_config(cls, config):
     return cls(config.sequence())
 
-  def sequenced(self, material):
+  def sequenced(self, material, start_time):
     '''Choose order to present material to user'''
     sequence = self.sequence()
+    sequence_file = Sequence.from_file(material)
     if sequence == 'custom':
-      sequence_file = Sequence.from_file(material)
       reordered_material = sequence_file.verses()
-      return reordered_material
     elif sequence == 'sequential':
-      return material
+      reordered_material = sorted(material)
     elif sequence == 'reverse':
-      return material[::-1]
+      reordered_material = sorted(material, reverse=True)
     elif sequence == 'random':
-      return random.sample(material, len(material))
-    assert False, f"Unknown sequence code: {sequence}"
-
+      reordered_material = random.sample(material, len(material))
+    else:
+      assert False, f"Unknown sequence code: {sequence}"
+    # Update is redundant if custom
+    sequence_file.update_file(reordered_material)
+    sequence_file.archive_file(start_time)
+    return reordered_material
+     
   def sequence(self):
     '''Choose order to present material to user'''
     supported_sequences = ['custom', 'sequential', 'reverse', 'random']
