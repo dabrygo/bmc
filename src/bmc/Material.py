@@ -24,4 +24,4 @@ class Book:
     return lines
 
   def parse(self):
-    return [Verse.Default(section="", text=x) for x in self._lines]
+    return [Verse.Default.from_string(x) for x in self._lines]

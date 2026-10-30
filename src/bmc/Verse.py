@@ -108,6 +108,14 @@ class Default(Verse):
   def __lt__(self, other):
     return self._reference < other._reference
 
+  @classmethod
+  def from_string(cls, string):
+    parts = string.split("|")
+    reference = parts[0].strip()
+    section = parts[1].strip()
+    text = parts[2].strip()
+    return cls(section=section, text=f'{reference} {text}')
+
   @staticmethod
   def _find(string):
     pattern = r'((\w+ ){1,3}\d+:\d+) (.+)'
