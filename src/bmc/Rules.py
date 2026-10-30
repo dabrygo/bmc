@@ -1,3 +1,4 @@
+import abc
 import csv
 import os
 import random
@@ -9,7 +10,66 @@ import pygame
 from bmc import GameView
 
 
-class Sequence:
+class Sequence(abc.ABC):
+  @abc.abstractmethod
+  def verses(self):
+    pass
+
+
+class Sequential(Sequence):
+  def __init__(self, material):
+    self._material = material
+
+  def verses(self):
+    return sorted(self._material)
+
+
+class Reverse(Sequence):
+  def __init__(self, material):
+    self._material = material
+
+  def verses(self):
+    return sorted(self._material, reverse=True)
+
+
+class Random(Sequence):
+  def __init__(self, material):
+    self._material = material
+
+  def verses(self):
+    material = self._material.copy()
+    k = len(material)
+    return random.sample(material, k)
+
+
+class MemorizeKP(Sequence):
+  def __init__(self, material):
+    self._material = material
+
+  def verses(self):
+    # TODO Break into chunks of 5s and 10s
+    # 1, 2, 1-2, 1-2-2-1, 3, 1-2-3, 1-2-3-3-2-1, 4, 1-2-3-4, 1-2-3-4-4-3-2-1, 5, 1-2-3-4-5, 1-2-3-4-5-5-4-3-2-1
+    # 6, 7, 6-7, 6-7-7-6, 8, 6-7-8, 6-7-8-8-7-6, 9, 6-7-8-9, 6-7-8-9-9-8-7-6, 10, 6-7-8-9-10, 6-7-8-9-10-10-9-8-7-6
+    # 1-2-3-4-5-6-7-8-9-10
+    # 11, 12, 11-12, 11-12-12-11, 13, 11-12-13, 11-12-13-13-12-11, 14, 11-12-13-14, 11-12-13-14-14-13-12-11, 15, 11-12-13-14-15, 11-12-13-14-15-15-14-13-12-11
+    # 16, 17, 16-17, 16-17-17-16, 18, 16-17-18, 16-17-18-18-17-16, 19, 16-17-18-19, 16-17-18-19-19-18-17-16, 20, 16-17-18-19-20, 16-17-18-19-20-20-19-18-17-16
+    # 11-12-13-14-15-16-17-18-19-20
+    # 1-2-3-4-5-6-7-8-9-10-11-12-13-14-15-16-17-18-19-20
+    sequence = []
+    n = len(self._material)
+    # n_chunks = n // 5
+    for i in range(1, n + 1):
+      sequence.append(self._material[i - 1])
+      for j in range(1, i + 1):
+        sequence.append(self._material[j - 1])
+      for j in range(i, 0, -1):
+        sequence.append(self._material[j - 1])
+    for i in range(n):
+      sequence.append(self._material[i])
+    return sequence
+
+
+class SequenceFile:
   def __init__(self, filename, material):
     self._filename = filename
     self._material = material
@@ -112,15 +172,17 @@ class Rules:
   def sequenced(self, material, start_time):
     '''Choose order to present material to user'''
     sequence = self.sequence()
-    sequence_file = Sequence.from_file(material)
+    sequence_file = SequenceFile.from_file(material)
     if sequence == 'custom':
       reordered_material = sequence_file.verses()
     elif sequence == 'sequential':
-      reordered_material = sorted(material)
+      reordered_material = Sequential(material).verses()
     elif sequence == 'reverse':
-      reordered_material = sorted(material, reverse=True)
+      reordered_material = Reverse(material).verses()
     elif sequence == 'random':
-      reordered_material = random.sample(material, len(material))
+      reordered_material = Random(material).verses()
+    elif sequence == 'memorize_kp':
+      reordered_material = MemorizeKP(material).verses()
     else:
       assert False, f"Unknown sequence code: {sequence}"
     # Update is redundant if custom
@@ -130,7 +192,7 @@ class Rules:
      
   def sequence(self):
     '''Choose order to present material to user'''
-    supported_sequences = ['custom', 'sequential', 'reverse', 'random']
+    supported_sequences = ['custom', 'sequential', 'reverse', 'random', 'memorize_kp']
     if self._sequence in supported_sequences:
       return self._sequence
     else:
