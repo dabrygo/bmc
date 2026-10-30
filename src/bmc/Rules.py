@@ -16,6 +16,14 @@ class Sequence(abc.ABC):
     pass
 
 
+class Custom(Sequence):
+  def __init__(self, sequence_file):
+    self._sequence_file = sequence_file
+
+  def verses(self):
+    return self._sequence_file.verses()
+
+
 class Sequential(Sequence):
   def __init__(self, material):
     self._material = material
@@ -42,31 +50,69 @@ class Random(Sequence):
     return random.sample(material, k)
 
 
+def kp_step(n, chunk_size=5):
+    if n % chunk_size == 1:
+        return [n]
+
+    # New Verse
+    x = [n] 
+
+    # Together
+    n_chunks = (n-1) // chunk_size
+    start = (chunk_size * n_chunks) + 1
+    together = tuple(i for i in range(start, n+1))
+    x.append(together)
+
+    # Forwards and backwards
+    forwards = tuple(i for i in range(start, n+1))
+    backwards = tuple(i for i in range(n, start - 1, -1))
+    fwd_and_bkwd = tuple([forwards, backwards])
+    x.append(fwd_and_bkwd)
+
+    if n > chunk_size and n % chunk_size == 0:
+        all_in_order = tuple(i for i in range(1, n+1))
+        x.append(all_in_order)
+
+    return x
+
+
+def kp(n, chunk_size=5):
+    x = []
+    for i in range(1, n+1):
+        step = kp_step(i, chunk_size=chunk_size)
+        new = []
+        together = []
+        forwards = []
+        backwards = []
+        all_in_order = []
+        if len(step) == 1:
+            new = step[0]
+        elif len(step) == 3:
+            new, together, fwd_and_bkwd = step
+            forwards, backwards = fwd_and_bkwd
+        elif len(step) == 4:
+            new, together, fwd_and_bkwd, all_in_order = step
+            forwards, backwards = fwd_and_bkwd
+        else:
+            raise ValueError
+        x.append(new)
+        x.extend(together)
+        x.extend(forwards)
+        x.extend(backwards)
+        x.extend(all_in_order)
+    if n % chunk_size != 0:
+        # Make sure to end with all verses in order
+        x.extend([i for i in range(1, n+1)])
+    return x
+
+
 class MemorizeKP(Sequence):
   def __init__(self, material):
     self._material = material
 
   def verses(self):
-    # TODO Break into chunks of 5s and 10s
-    # 1, 2, 1-2, 1-2-2-1, 3, 1-2-3, 1-2-3-3-2-1, 4, 1-2-3-4, 1-2-3-4-4-3-2-1, 5, 1-2-3-4-5, 1-2-3-4-5-5-4-3-2-1
-    # 6, 7, 6-7, 6-7-7-6, 8, 6-7-8, 6-7-8-8-7-6, 9, 6-7-8-9, 6-7-8-9-9-8-7-6, 10, 6-7-8-9-10, 6-7-8-9-10-10-9-8-7-6
-    # 1-2-3-4-5-6-7-8-9-10
-    # 11, 12, 11-12, 11-12-12-11, 13, 11-12-13, 11-12-13-13-12-11, 14, 11-12-13-14, 11-12-13-14-14-13-12-11, 15, 11-12-13-14-15, 11-12-13-14-15-15-14-13-12-11
-    # 16, 17, 16-17, 16-17-17-16, 18, 16-17-18, 16-17-18-18-17-16, 19, 16-17-18-19, 16-17-18-19-19-18-17-16, 20, 16-17-18-19-20, 16-17-18-19-20-20-19-18-17-16
-    # 11-12-13-14-15-16-17-18-19-20
-    # 1-2-3-4-5-6-7-8-9-10-11-12-13-14-15-16-17-18-19-20
-    sequence = []
     n = len(self._material)
-    # n_chunks = n // 5
-    for i in range(1, n + 1):
-      sequence.append(self._material[i - 1])
-      for j in range(1, i + 1):
-        sequence.append(self._material[j - 1])
-      for j in range(i, 0, -1):
-        sequence.append(self._material[j - 1])
-    for i in range(n):
-      sequence.append(self._material[i])
-    return sequence
+    return [self._material[idx-1] for idx in kp(n)]
 
 
 class SequenceFile:
@@ -174,21 +220,22 @@ class Rules:
     sequence = self.sequence()
     sequence_file = SequenceFile.from_file(material)
     if sequence == 'custom':
-      reordered_material = sequence_file.verses()
+      reordered_material = Custom(sequence_file)
     elif sequence == 'sequential':
-      reordered_material = Sequential(material).verses()
+      reordered_material = Sequential(material)
     elif sequence == 'reverse':
-      reordered_material = Reverse(material).verses()
+      reordered_material = Reverse(material)
     elif sequence == 'random':
-      reordered_material = Random(material).verses()
+      reordered_material = Random(material)
     elif sequence == 'memorize_kp':
-      reordered_material = MemorizeKP(material).verses()
+      reordered_material = MemorizeKP(material)
     else:
       assert False, f"Unknown sequence code: {sequence}"
     # Update is redundant if custom
-    sequence_file.update_file(reordered_material)
+    screens = reordered_material.verses()
+    sequence_file.update_file(screens)
     sequence_file.archive_file(start_time)
-    return reordered_material
+    return screens
      
   def sequence(self):
     '''Choose order to present material to user'''

@@ -25,10 +25,10 @@ def kp_step(n, chunk_size=5):
 
     return x
 
-def kp(n):
+def kp(n, chunk_size=5):
     x = []
     for i in range(1, n+1):
-        step = kp_step(i)
+        step = kp_step(i, chunk_size=chunk_size)
         new = []
         together = []
         forwards = []
@@ -49,12 +49,15 @@ def kp(n):
         x.extend(forwards)
         x.extend(backwards)
         x.extend(all_in_order)
+    if n % chunk_size != 0:
+        # Make sure to end with all verses in order
+        x.extend([i for i in range(1, n+1)])
     return x
 
 
 class TestKp(unittest.TestCase):
     def test_one(self):
-        self.assertEqual(kp(1), [1])
+        self.assertEqual(kp(1), [1, 1])
 
     def test_two(self):
         self.assertEqual(
@@ -62,7 +65,8 @@ class TestKp(unittest.TestCase):
             [1,
              2,
                  1, 2,
-                 1, 2, 2, 1
+                 1, 2, 2, 1,
+             1, 2
             ]
         )
 
@@ -75,7 +79,8 @@ class TestKp(unittest.TestCase):
                  1, 2, 2, 1,
              3,
                  1, 2, 3,
-                 1, 2, 3, 3, 2, 1
+                 1, 2, 3, 3, 2, 1,
+             1, 2, 3
              ]
         )
 
@@ -96,6 +101,7 @@ class TestKp(unittest.TestCase):
                  1, 2, 3, 4, 5,
                  1, 2, 3, 4, 5, 5, 4, 3, 2, 1,
              6,
+             1, 2, 3, 4, 5, 6,
              ]
         )
 
@@ -119,6 +125,7 @@ class TestKp(unittest.TestCase):
              7,
                  6, 7,
                  6, 7, 7, 6,
+             1, 2, 3, 4, 5, 6, 7,
              ]
         )
 
@@ -156,7 +163,7 @@ class TestKp(unittest.TestCase):
         )
 
     def test_len_13(self):
-        self.assertEqual(122, len(kp(13)))
+        self.assertEqual(135, len(kp(13)))
 
 class TestKpStep(unittest.TestCase):
     def test_one(self):
